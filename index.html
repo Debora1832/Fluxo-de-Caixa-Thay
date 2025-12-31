@@ -1,1 +1,250 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Fluxo de Caixa</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+.menu{display:block;width:100%;padding:8px;border-radius:6px;text-align:left}
+.menu:hover{background:#eef2ff}
+.hidden{display:none}
+</style>
+</head>
+
+<body class="bg-gray-100">
+
+<!-- LOGIN -->
+<div id="loginScreen" class="fixed inset-0 flex items-center justify-center bg-gray-100">
+  <div class="bg-white p-6 rounded-xl shadow w-80">
+    <h2 class="text-xl font-bold mb-4 text-center">Login</h2>
+    <input id="email" class="border p-2 w-full mb-2" placeholder="E-mail">
+    <input id="senha" type="password" class="border p-2 w-full mb-4" placeholder="Senha">
+    <button onclick="login()" class="bg-blue-600 text-white w-full p-2 rounded mb-2">Entrar</button>
+    <button onclick="register()" class="bg-gray-600 text-white w-full p-2 rounded">Cadastrar</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden min-h-screen flex">
+
+<!-- MENU -->
+<aside class="w-64 bg-white shadow p-4">
+  <h1 class="font-bold text-lg mb-4">Fluxo de Caixa</h1>
+  <button onclick="show('dashboard')" class="menu">Dashboard</button>
+  <button onclick="show('receitas')" class="menu">Receitas</button>
+  <button onclick="show('despesas')" class="menu">Despesas</button>
+  <button onclick="show('dre')" class="menu">DRE</button>
+  <button onclick="show('ir')" class="menu">IR / MEI</button>
+  <button onclick="logout()" class="menu text-red-600">Sair</button>
+</aside>
+
+<!-- CONTEÚDO -->
+<main class="flex-1 p-6 space-y-6">
+
+<!-- DASHBOARD -->
+<section id="dashboard">
+<h2 class="text-xl font-bold mb-4">Dashboard</h2>
+
+<div class="grid md:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white p-4 rounded shadow">Receita<br><b id="dRec">0</b></div>
+  <div class="bg-white p-4 rounded shadow">Despesa<br><b id="dDesp">0</b></div>
+  <div class="bg-white p-4 rounded shadow">Resultado<br><b id="dRes">0</b></div>
+  <div class="bg-white p-4 rounded shadow">Lançamentos<br><b id="dQtd">0</b></div>
+</div>
+
+<div class="grid md:grid-cols-2 gap-4">
+  <div class="bg-white p-4 rounded shadow"><canvas id="grafResumo"></canvas></div>
+  <div class="bg-white p-4 rounded shadow"><canvas id="grafCategoria"></canvas></div>
+</div>
+</section>
+
+<!-- RECEITAS -->
+<section id="receitas" class="hidden">
+<h2 class="text-xl font-bold mb-4">Receitas</h2>
+
+<form id="formReceita" class="grid grid-cols-2 gap-3 mb-4">
+<input type="date" id="rData" required>
+<input placeholder="Descrição" id="rDesc" required>
+<input placeholder="Categoria" id="rCat" required>
+<input type="number" placeholder="Valor" id="rValor" required>
+<select id="rStatus">
+<option>Pago</option>
+<option>Não pago</option>
+</select>
+<button class="bg-blue-600 text-white rounded col-span-2">Adicionar</button>
+</form>
+
+<table class="w-full bg-white rounded">
+<thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Status</th></tr></thead>
+<tbody id="listaReceitas"></tbody>
+</table>
+</section>
+
+<!-- DESPESAS -->
+<section id="despesas" class="hidden">
+<h2 class="text-xl font-bold mb-4">Despesas</h2>
+
+<form id="formDespesa" class="grid grid-cols-2 gap-3 mb-4">
+<input type="date" id="dData" required>
+<input placeholder="Descrição" id="dDesc" required>
+<input placeholder="Categoria" id="dCat" required>
+
+<select id="dForma" onchange="ajustarForma()">
+<option value="PIX">PIX / Dinheiro</option>
+<option value="Boleto">Boleto</option>
+<option value="Cartao">Cartão</option>
+</select>
+
+<input id="dParcelas" type="number" placeholder="Parcelas" class="hidden">
+<input type="number" placeholder="Valor" id="dValor" required>
+
+<button class="bg-blue-600 text-white rounded col-span-2">Adicionar</button>
+</form>
+
+<table class="w-full bg-white rounded">
+<thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Forma</th></tr></thead>
+<tbody id="listaDespesas"></tbody>
+</table>
+</section>
+
+<!-- DRE -->
+<section id="dre" class="hidden">
+<h2 class="text-xl font-bold mb-4">DRE</h2>
+<input type="month" id="dreMes">
+<button onclick="calcDRE()" class="bg-blue-600 text-white p-2 rounded">Calcular</button>
+<div class="grid md:grid-cols-3 gap-4 mt-4">
+<div class="bg-white p-4 rounded">Receita<br><b id="dreR">0</b></div>
+<div class="bg-white p-4 rounded">Despesa<br><b id="dreD">0</b></div>
+<div class="bg-white p-4 rounded">Resultado<br><b id="dreRes">0</b></div>
+</div>
+</section>
+
+<!-- IR -->
+<section id="ir" class="hidden">
+<h2 class="text-xl font-bold mb-4">IR / MEI</h2>
+<input placeholder="Ano" id="irAno">
+<button onclick="calcIR()" class="bg-blue-600 text-white p-2 rounded">Calcular</button>
+<div class="grid md:grid-cols-3 gap-4 mt-4">
+<div class="bg-white p-4 rounded">Receita<br><b id="irR">0</b></div>
+<div class="bg-white p-4 rounded">Despesa<br><b id="irD">0</b></div>
+<div class="bg-white p-4 rounded">Base<br><b id="irB">0</b></div>
+</div>
+</section>
+
+</main>
+</div>
+
+<!-- FIREBASE + JS -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_AUTH_DOMAIN",
+  projectId: "SEU_PROJECT_ID",
+  appId: "SEU_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const cloud = getFirestore(app);
+
+let uid=null;
+let db={receitas:[],despesas:[]};
+let graf1,graf2;
+
+window.login=()=>signInWithEmailAndPassword(auth,email.value,senha.value);
+window.register=()=>createUserWithEmailAndPassword(auth,email.value,senha.value);
+window.logout=()=>signOut(auth);
+
+onAuthStateChanged(auth,async u=>{
+  if(u){
+    uid=u.uid;
+    loginScreen.classList.add('hidden');
+    app.classList.remove('hidden');
+    await carregar();
+  }
+});
+
+window.show=id=>{
+document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
+document.getElementById(id).classList.remove('hidden');
+};
+
+async function carregar(){
+  db.receitas=await load('receitas');
+  db.despesas=await load('despesas');
+  render();
+}
+
+async function load(col){
+  const q=query(collection(cloud,col),where('uid','==',uid));
+  const s=await getDocs(q);
+  return s.docs.map(d=>d.data());
+}
+
+async function save(col,obj){
+  await addDoc(collection(cloud,col),{...obj,uid});
+}
+
+formReceita.onsubmit=async e=>{
+e.preventDefault();
+let r={id:crypto.randomUUID(),data:rData.value,desc:rDesc.value,cat:rCat.value,valor:+rValor.value,status:rStatus.value};
+db.receitas.push(r);await save('receitas',r);render();e.target.reset();
+};
+
+formDespesa.onsubmit=async e=>{
+e.preventDefault();
+let p=dParcelas.value?+dParcelas.value:1;
+for(let i=1;i<=p;i++){
+let d={id:crypto.randomUUID(),data:dData.value,desc:dDesc.value,cat:dCat.value,valor:+dValor.value/p,forma:dForma.value};
+db.despesas.push(d);await save('despesas',d);
+}
+render();e.target.reset();
+};
+
+window.ajustarForma=()=>dParcelas.classList.toggle('hidden',dForma.value==='PIX');
+
+function render(){
+listaReceitas.innerHTML=db.receitas.map(r=>`<tr><td>${r.data}</td><td>${r.desc}</td><td>${r.valor}</td><td>${r.status}</td></tr>`).join('');
+listaDespesas.innerHTML=db.despesas.map(d=>`<tr><td>${d.data}</td><td>${d.desc}</td><td>${d.valor}</td><td>${d.forma}</td></tr>`).join('');
+dashboard();
+}
+
+function dashboard(){
+let mes=new Date().toISOString().slice(0,7);
+let rec=db.receitas.filter(r=>r.status==='Pago'&&r.data.startsWith(mes)).reduce((s,r)=>s+r.valor,0);
+let desp=db.despesas.filter(d=>d.data.startsWith(mes)).reduce((s,d)=>s+d.valor,0);
+dRec.textContent=rec;dDesp.textContent=desp;dRes.textContent=rec-desp;dQtd.textContent=db.receitas.length+db.despesas.length;
+
+if(graf1)graf1.destroy();
+graf1=new Chart(grafResumo,{type:'bar',data:{labels:['Receita','Despesa'],datasets:[{data:[rec,desp]}]}});
+
+let map={};db.despesas.forEach(d=>map[d.cat]=(map[d.cat]||0)+d.valor);
+if(graf2)graf2.destroy();
+graf2=new Chart(grafCategoria,{type:'pie',data:{labels:Object.keys(map),datasets:[{data:Object.values(map)}]}});
+}
+
+window.calcDRE=()=>{
+let m=dreMes.value;
+let r=db.receitas.filter(x=>x.status==='Pago'&&x.data.startsWith(m)).reduce((s,x)=>s+x.valor,0);
+let d=db.despesas.filter(x=>x.data.startsWith(m)).reduce((s,x)=>s+x.valor,0);
+dreR.textContent=r;dreD.textContent=d;dreRes.textContent=r-d;
+};
+
+window.calcIR=()=>{
+let a=irAno.value;
+let r=db.receitas.filter(x=>x.status==='Pago'&&x.data.startsWith(a)).reduce((s,x)=>s+x.valor,0);
+let d=db.despesas.filter(x=>x.data.startsWith(a)).reduce((s,x)=>s+x.valor,0);
+irR.textContent=r;irD.textContent=d;irB.textContent=r-d;
+};
+</script>
+
+</body>
+</html>
