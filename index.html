@@ -175,7 +175,8 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const cloud = getFirestore(app);
 
-let uid=null;
+const DEFAULT_UID='anon';
+let uid=DEFAULT_UID;
 let db={receitas:[],despesas:[],agenda:[]};
 const CAT_SERVICO='Serviço';
 const ESC_MAP={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;','/':'&#47;'};
@@ -191,6 +192,8 @@ onAuthStateChanged(auth,async u=>{
     loginScreen.classList.add('hidden');
     app.classList.remove('hidden');
     await carregar();
+  }else{
+    iniciarSemLogin();
   }
 });
 
@@ -198,6 +201,16 @@ window.show=id=>{
 document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
 document.getElementById(id).classList.remove('hidden');
 };
+
+async function iniciarSemLogin(){
+  uid=DEFAULT_UID;
+  loginScreen.classList.add('hidden');
+  app.classList.remove('hidden');
+  show('agenda');
+  await carregar();
+}
+
+iniciarSemLogin();
 
 async function carregar(){
   db.receitas=await load('receitas');
