@@ -35,6 +35,7 @@
 <aside class="w-64 bg-white shadow p-4">
   <h1 class="font-bold text-lg mb-4">Fluxo de Caixa</h1>
   <button onclick="show('dashboard')" class="menu">Dashboard</button>
+  <button onclick="show('agenda')" class="menu">Agenda</button>
   <button onclick="show('receitas')" class="menu">Receitas</button>
   <button onclick="show('despesas')" class="menu">Despesas</button>
   <button onclick="show('dre')" class="menu">DRE</button>
@@ -62,6 +63,25 @@
 </div>
 </section>
 
+<!-- AGENDA -->
+<section id="agenda" class="hidden">
+<h2 class="text-xl font-bold mb-4">Agenda</h2>
+
+<form id="formAgenda" class="grid md:grid-cols-2 gap-3 mb-4">
+<input type="date" id="aData" aria-label="Data do atendimento" required>
+<input type="time" id="aHora" aria-label="Hora do atendimento">
+<input placeholder="Cliente" id="aCliente" aria-label="Nome da cliente" required>
+<input placeholder="Serviço" id="aServico" aria-label="Serviço a realizar" required>
+<input type="number" placeholder="Valor" id="aValor" aria-label="Valor do atendimento" min="0" step="0.01" required>
+<button type="submit" class="bg-blue-600 text-white rounded col-span-2" aria-label="Agendar atendimento">Agendar</button>
+</form>
+
+<table class="w-full bg-white rounded">
+<thead><tr><th scope="col" class="text-left p-2">Data</th><th scope="col" class="text-left p-2">Hora</th><th scope="col" class="text-left p-2">Cliente</th><th scope="col" class="text-left p-2">Serviço</th><th scope="col" class="text-left p-2">Valor</th><th scope="col" class="text-left p-2">Status</th><th scope="col" class="text-left p-2">Ação</th></tr></thead>
+<tbody id="listaAgenda"></tbody>
+</table>
+</section>
+
 <!-- RECEITAS -->
 <section id="receitas" class="hidden">
 <h2 class="text-xl font-bold mb-4">Receitas</h2>
@@ -79,7 +99,7 @@
 </form>
 
 <table class="w-full bg-white rounded">
-<thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Status</th></tr></thead>
+<thead><tr><th scope="col" class="text-left p-2">Data</th><th scope="col" class="text-left p-2">Descrição</th><th scope="col" class="text-left p-2">Valor</th><th scope="col" class="text-left p-2">Status</th></tr></thead>
 <tbody id="listaReceitas"></tbody>
 </table>
 </section>
@@ -106,7 +126,7 @@
 </form>
 
 <table class="w-full bg-white rounded">
-<thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Forma</th></tr></thead>
+<thead><tr><th scope="col" class="text-left p-2">Data</th><th scope="col" class="text-left p-2">Descrição</th><th scope="col" class="text-left p-2">Valor</th><th scope="col" class="text-left p-2">Forma</th></tr></thead>
 <tbody id="listaDespesas"></tbody>
 </table>
 </section>
@@ -142,7 +162,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "SUA_API_KEY",
@@ -156,7 +176,9 @@ const auth = getAuth(app);
 const cloud = getFirestore(app);
 
 let uid=null;
-let db={receitas:[],despesas:[]};
+let db={receitas:[],despesas:[],agenda:[]};
+const CAT_SERVICO='Serviço';
+const ESC_MAP={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;','/':'&#47;'};
 let graf1,graf2;
 
 window.login=()=>signInWithEmailAndPassword(auth,email.value,senha.value);
@@ -180,23 +202,25 @@ document.getElementById(id).classList.remove('hidden');
 async function carregar(){
   db.receitas=await load('receitas');
   db.despesas=await load('despesas');
+  db.agenda=await load('agenda');
   render();
 }
 
 async function load(col){
   const q=query(collection(cloud,col),where('uid','==',uid));
   const s=await getDocs(q);
-  return s.docs.map(d=>d.data());
+  return s.docs.map(d=>({docId:d.id,...d.data()}));
 }
 
 async function save(col,obj){
-  await addDoc(collection(cloud,col),{...obj,uid});
+  const ref=await addDoc(collection(cloud,col),{...obj,uid});
+  return ref.id;
 }
 
 formReceita.onsubmit=async e=>{
 e.preventDefault();
 let r={id:crypto.randomUUID(),data:rData.value,desc:rDesc.value,cat:rCat.value,valor:+rValor.value,status:rStatus.value};
-db.receitas.push(r);await save('receitas',r);render();e.target.reset();
+db.receitas.push(r);r.docId=await save('receitas',r);render();e.target.reset();
 };
 
 formDespesa.onsubmit=async e=>{
@@ -204,18 +228,70 @@ e.preventDefault();
 let p=dParcelas.value?+dParcelas.value:1;
 for(let i=1;i<=p;i++){
 let d={id:crypto.randomUUID(),data:dData.value,desc:dDesc.value,cat:dCat.value,valor:+dValor.value/p,forma:dForma.value};
-db.despesas.push(d);await save('despesas',d);
+db.despesas.push(d);d.docId=await save('despesas',d);
 }
 render();e.target.reset();
 };
 
+formAgenda.onsubmit=async e=>{
+e.preventDefault();
+let a={id:crypto.randomUUID(),data:aData.value,hora:aHora.value,cliente:aCliente.value,servico:aServico.value,valor:+aValor.value,status:'Pendente'};
+db.agenda.push(a);a.docId=await save('agenda',a);render();e.target.reset();
+};
+
 window.ajustarForma=()=>dParcelas.classList.toggle('hidden',dForma.value==='PIX');
 
+const esc=str=>String(str??'').replace(/[&<>"'`/]/g,m=>ESC_MAP[m]);
+const gerarDescAtendimento=(cliente,servico)=>{
+let extra=`${cliente||''} ${servico||''}`.trim();
+return extra?`Atendimento ${extra}`:'Atendimento concluído';
+};
+
 function render(){
-listaReceitas.innerHTML=db.receitas.map(r=>`<tr><td>${r.data}</td><td>${r.desc}</td><td>${r.valor}</td><td>${r.status}</td></tr>`).join('');
-listaDespesas.innerHTML=db.despesas.map(d=>`<tr><td>${d.data}</td><td>${d.desc}</td><td>${d.valor}</td><td>${d.forma}</td></tr>`).join('');
+listaAgenda.innerHTML=db.agenda.map(a=>{
+let action=a.status==='Concluído'?'':`<button class="text-blue-600 underline btn-concluir" data-agenda-id="${esc(a.id)}">Concluir</button>`;
+return `<tr><td class="p-2">${esc(a.data)}</td><td class="p-2">${esc(a.hora||'')}</td><td class="p-2">${esc(a.cliente)}</td><td class="p-2">${esc(a.servico)}</td><td class="p-2">${esc(a.valor)}</td><td class="p-2">${esc(a.status)}</td><td class="p-2">${action}</td></tr>`;
+}).join('');
+listaReceitas.innerHTML=db.receitas.map(r=>`<tr><td class="p-2">${esc(r.data)}</td><td class="p-2">${esc(r.desc)}</td><td class="p-2">${esc(r.valor)}</td><td class="p-2">${esc(r.status)}</td></tr>`).join('');
+listaDespesas.innerHTML=db.despesas.map(d=>`<tr><td class="p-2">${esc(d.data)}</td><td class="p-2">${esc(d.desc)}</td><td class="p-2">${esc(d.valor)}</td><td class="p-2">${esc(d.forma)}</td></tr>`).join('');
 dashboard();
 }
+
+const concluirAgendamento=async id=>{
+if (!id || typeof id !== 'string') return;
+let ag=db.agenda.find(a=>a.id===id);
+if(!ag||ag.status==='Concluído')return;
+let statusAnterior=ag.status;
+ag.status='Concluído';
+let novaReceita=null;
+try{
+if(ag.docId) await updateDoc(doc(cloud,'agenda',ag.docId),{status:'Concluído'});
+let valorNumerico=parseFloat(ag.valor);
+if(Number.isNaN(valorNumerico)) throw new Error('Valor de atendimento inválido');
+novaReceita={id:crypto.randomUUID(),data:ag.data,desc:gerarDescAtendimento(ag.cliente,ag.servico),cat:CAT_SERVICO,valor:valorNumerico,status:'Pago'};
+db.receitas.push(novaReceita);novaReceita.docId=await save('receitas',novaReceita);render();
+}catch(err){
+console.error(`Erro ao concluir agendamento ${id}:`,err);
+ag.status=statusAnterior;
+if(novaReceita) db.receitas=db.receitas.filter(r=>r.id!==novaReceita.id);
+render();
+}
+};
+
+let agendaHandlerAttached=false;
+const attachAgendaHandler=()=>{
+if(agendaHandlerAttached) return;
+agendaHandlerAttached=true;
+const tabela=document.getElementById('listaAgenda');
+if(!tabela) return;
+tabela.addEventListener('click',e=>{
+const btn=e.target.closest('.btn-concluir');
+if(!btn) return;
+concluirAgendamento(btn.dataset.agendaId);
+});
+};
+
+attachAgendaHandler();
 
 function dashboard(){
 let mes=new Date().toISOString().slice(0,7);
