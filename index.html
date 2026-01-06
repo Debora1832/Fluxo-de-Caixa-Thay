@@ -160,20 +160,45 @@
 
 <!-- FIREBASE + JS -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+let app=null,auth=null,cloud=null,firestoreFns=null;
+let firebaseLoaded=false;
 
-const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_AUTH_DOMAIN",
-  projectId: "SEU_PROJECT_ID",
-  appId: "SEU_APP_ID"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const cloud = getFirestore(app);
+async function carregarLibs(){
+  try{
+    const [{ initializeApp }, { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut }, { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc }] = await Promise.all([
+      import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"),
+      import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js")
+    ]);
+    const firebaseConfig = { apiKey:"SUA_API_KEY", authDomain:"SEU_AUTH_DOMAIN", projectId:"SEU_PROJECT_ID", appId:"SEU_APP_ID" };
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    cloud = getFirestore(app);
+    firestoreFns={collection,addDoc,getDocs,query,where,doc,updateDoc};
+    firebaseLoaded=true;
+    if(auth) onAuthStateChanged(auth,async u=>{
+      if(u){
+        uid=u.uid;
+        loginScreen.classList.add('hidden');
+        appEl.classList.remove('hidden');
+        await carregar();
+      }else iniciarSemLogin();
+    });
+  }catch(err){
+    console.warn('Firebase indisponível, seguindo offline',err);
+    firebaseLoaded=false;
+    iniciarSemLogin();
+  }
+  try{
+    if(!window.Chart){
+      const chartMod=await import("https://cdn.jsdelivr.net/npm/chart.js");
+      window.Chart=chartMod.default||chartMod;
+    }
+  }catch(err){
+    console.warn('Chart indisponível, usando stub',err);
+    window.Chart=class{constructor(){this.destroy=()=>{};} destroy(){} static register(){}};
+  }
+}
 
 const DEFAULT_UID='anon';
 let uid=DEFAULT_UID;
@@ -181,21 +206,12 @@ let db={receitas:[],despesas:[],agenda:[]};
 const CAT_SERVICO='Serviço';
 const ESC_MAP={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;','/':'&#47;'};
 let graf1,graf2;
+const appEl=document.getElementById('app');
+const loginEl=document.getElementById('loginScreen');
 
-window.login=()=>signInWithEmailAndPassword(auth,email.value,senha.value);
-window.register=()=>createUserWithEmailAndPassword(auth,email.value,senha.value);
-window.logout=()=>signOut(auth);
-
-onAuthStateChanged(auth,async u=>{
-  if(u){
-    uid=u.uid;
-    loginScreen.classList.add('hidden');
-    app.classList.remove('hidden');
-    await carregar();
-  }else{
-    iniciarSemLogin();
-  }
-});
+window.login=()=>auth?signInWithEmailAndPassword(auth,email.value,senha.value):iniciarSemLogin();
+window.register=()=>auth?createUserWithEmailAndPassword(auth,email.value,senha.value):iniciarSemLogin();
+window.logout=()=>auth?signOut(auth):iniciarSemLogin();
 
 window.show=id=>{
 document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
@@ -204,13 +220,14 @@ document.getElementById(id).classList.remove('hidden');
 
 async function iniciarSemLogin(){
   uid=DEFAULT_UID;
-  loginScreen.classList.add('hidden');
-  app.classList.remove('hidden');
+  loginEl.classList.add('hidden');
+  appEl.classList.remove('hidden');
   show('agenda');
   await carregar();
 }
 
 iniciarSemLogin();
+carregarLibs();
 
 async function carregar(){
   db.receitas=await load('receitas');
@@ -220,14 +237,26 @@ async function carregar(){
 }
 
 async function load(col){
-  const q=query(collection(cloud,col),where('uid','==',uid));
-  const s=await getDocs(q);
-  return s.docs.map(d=>({docId:d.id,...d.data()}));
+  try{
+    if(!cloud||!firestoreFns) return [];
+    const q=firestoreFns.query(firestoreFns.collection(cloud,col),firestoreFns.where('uid','==',uid));
+    const s=await firestoreFns.getDocs(q);
+    return s.docs.map(d=>({docId:d.id,...d.data()}));
+  }catch(err){
+    console.error(`Erro ao carregar ${col}`,err);
+    return [];
+  }
 }
 
 async function save(col,obj){
-  const ref=await addDoc(collection(cloud,col),{...obj,uid});
-  return ref.id;
+  try{
+    if(!cloud||!firestoreFns) return null;
+    const ref=await firestoreFns.addDoc(firestoreFns.collection(cloud,col),{...obj,uid});
+    return ref.id;
+  }catch(err){
+    console.error(`Erro ao salvar em ${col}`,err);
+    return null;
+  }
 }
 
 formReceita.onsubmit=async e=>{
@@ -278,7 +307,7 @@ let statusAnterior=ag.status;
 ag.status='Concluído';
 let novaReceita=null;
 try{
-if(ag.docId) await updateDoc(doc(cloud,'agenda',ag.docId),{status:'Concluído'});
+if(ag.docId&&cloud&&firestoreFns) await firestoreFns.updateDoc(firestoreFns.doc(cloud,'agenda',ag.docId),{status:'Concluído'});
 let valorNumerico=parseFloat(ag.valor);
 if(Number.isNaN(valorNumerico)) throw new Error('Valor de atendimento inválido');
 novaReceita={id:crypto.randomUUID(),data:ag.data,desc:gerarDescAtendimento(ag.cliente,ag.servico),cat:CAT_SERVICO,valor:valorNumerico,status:'Pago'};
