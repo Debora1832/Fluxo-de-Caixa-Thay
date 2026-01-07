@@ -65,7 +65,15 @@
 
 <!-- AGENDA -->
 <section id="agenda" class="hidden">
-<h2 class="text-xl font-bold mb-4">Agenda</h2>
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-xl font-bold">Agenda</h2>
+<div class="flex items-center gap-2">
+<button type="button" class="px-3 py-1 rounded bg-gray-200" onclick="mudarMesAgenda(-1)">◀</button>
+<input type="month" id="agendaMes" class="border p-1 rounded" onchange="definirMesAgenda(this.value)">
+<button type="button" class="px-3 py-1 rounded bg-gray-200" onclick="mudarMesAgenda(1)">▶</button>
+<span id="agendaMesLabel" class="text-sm text-gray-600"></span>
+</div>
+</div>
 
 <form id="formAgenda" class="grid md:grid-cols-2 gap-3 mb-4">
 <input type="date" id="aData" aria-label="Data do atendimento" required>
@@ -206,6 +214,7 @@ let db={receitas:[],despesas:[],agenda:[]};
 const CAT_SERVICO='Serviço';
 const ESC_MAP={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;','/':'&#47;'};
 let graf1,graf2;
+let mesAgenda=new Date().toISOString().slice(0,7);
 const appEl=document.getElementById('app');
 const loginEl=document.getElementById('loginScreen');
 
@@ -290,7 +299,9 @@ return extra?`Atendimento ${extra}`:'Atendimento concluído';
 };
 
 function render(){
-listaAgenda.innerHTML=db.agenda.map(a=>{
+agendaMes.value=mesAgenda;
+agendaMesLabel.textContent=new Date(mesAgenda+'-01').toLocaleString('pt-BR',{month:'long',year:'numeric'});
+listaAgenda.innerHTML=db.agenda.filter(a=>a.data?.startsWith(mesAgenda)).map(a=>{
 let action=a.status==='Concluído'?'':`<button class="text-blue-600 underline btn-concluir" data-agenda-id="${esc(a.id)}">Concluir</button>`;
 return `<tr><td class="p-2">${esc(a.data)}</td><td class="p-2">${esc(a.hora||'')}</td><td class="p-2">${esc(a.cliente)}</td><td class="p-2">${esc(a.servico)}</td><td class="p-2">${esc(a.valor)}</td><td class="p-2">${esc(a.status)}</td><td class="p-2">${action}</td></tr>`;
 }).join('');
@@ -334,6 +345,19 @@ concluirAgendamento(btn.dataset.agendaId);
 };
 
 attachAgendaHandler();
+
+window.mudarMesAgenda=delta=>{
+  const d=new Date(mesAgenda+'-01');
+  d.setMonth(d.getMonth()+delta);
+  mesAgenda=d.toISOString().slice(0,7);
+  render();
+};
+
+window.definirMesAgenda=val=>{
+  if(!val) return;
+  mesAgenda=val;
+  render();
+};
 
 function dashboard(){
 let mes=new Date().toISOString().slice(0,7);
