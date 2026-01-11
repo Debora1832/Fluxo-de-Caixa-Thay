@@ -381,7 +381,11 @@ function renderCalendario(agDoMes){
   cal.innerHTML=cells.map(dia=>{
     if(!dia) return `<div class="h-24 border rounded bg-gray-50"></div>`;
     const diaStr=`${mesAgenda}-${String(dia).padStart(2,'0')}`;
-    const itens=agDoMes.filter(a=>a.data===diaStr).map(a=>`<div class="text-xs truncate ${a.status==='Concluído'?'text-green-700':'text-blue-700'}">${esc(a.hora||'')} ${esc(a.cliente)}</div>`).join('');
+    const itens=agDoMes
+      .filter(a=>a.data===diaStr)
+      .sort((a,b)=>(a.hora||'').localeCompare(b.hora||''))
+      .map(a=>`<div class="text-[11px] truncate rounded px-1 py-[2px] ${a.status==='Concluído'?'bg-green-100 text-green-800':'bg-blue-100 text-blue-800'}">${esc(a.hora||'')} ${esc(a.cliente)}</div>`)
+      .join('');
     return `<div class="h-24 border rounded p-1 bg-white flex flex-col"><div class="text-xs font-semibold">${dia}</div><div class="flex-1 space-y-1 overflow-hidden">${itens||'<span class="text-[10px] text-gray-400">Livre</span>'}</div></div>`;
   }).join('');
 }
