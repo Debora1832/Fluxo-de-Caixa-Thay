@@ -35,6 +35,7 @@
 <aside class="w-64 bg-white shadow p-4">
   <h1 class="font-bold text-lg mb-4">Fluxo de Caixa</h1>
   <button onclick="show('dashboard')" class="menu">Dashboard</button>
+  <button onclick="show('agenda')" class="menu">Agenda</button>
   <button onclick="show('receitas')" class="menu">Receitas</button>
   <button onclick="show('despesas')" class="menu">Despesas</button>
   <button onclick="show('dre')" class="menu">DRE</button>
@@ -62,6 +63,40 @@
 </div>
 </section>
 
+<!-- AGENDA -->
+<section id="agenda" class="hidden">
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-xl font-bold">Agenda</h2>
+<div class="flex items-center gap-2">
+<button type="button" class="px-3 py-1 rounded bg-gray-200" onclick="mudarMesAgenda(-1)">◀</button>
+<input type="month" id="agendaMes" class="border p-1 rounded" onchange="definirMesAgenda(this.value)">
+<button type="button" class="px-3 py-1 rounded bg-gray-200" onclick="mudarMesAgenda(1)">▶</button>
+<span id="agendaMesLabel" class="text-sm text-gray-600"></span>
+</div>
+</div>
+
+<form id="formAgenda" class="grid md:grid-cols-2 gap-3 mb-4">
+<input type="date" id="aData" aria-label="Data do atendimento" required>
+<input type="time" id="aHora" aria-label="Hora do atendimento">
+<input placeholder="Cliente" id="aCliente" aria-label="Nome da cliente" required>
+<input placeholder="Serviço" id="aServico" aria-label="Serviço a realizar" required>
+<input type="number" placeholder="Valor" id="aValor" aria-label="Valor do atendimento" min="0" step="0.01" required>
+<button type="submit" class="bg-blue-600 text-white rounded col-span-2" aria-label="Agendar atendimento">Agendar</button>
+</form>
+
+<div class="mb-4">
+<div class="grid grid-cols-7 text-center text-sm font-semibold text-gray-600 mb-1">
+<div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+</div>
+<div id="calAgenda" class="grid grid-cols-7 gap-2"></div>
+</div>
+
+<table class="w-full bg-white rounded">
+<thead><tr><th scope="col" class="text-left p-2">Data</th><th scope="col" class="text-left p-2">Hora</th><th scope="col" class="text-left p-2">Cliente</th><th scope="col" class="text-left p-2">Serviço</th><th scope="col" class="text-left p-2">Valor</th><th scope="col" class="text-left p-2">Status</th><th scope="col" class="text-left p-2">Ação</th></tr></thead>
+<tbody id="listaAgenda"></tbody>
+</table>
+</section>
+
 <!-- RECEITAS -->
 <section id="receitas" class="hidden">
 <h2 class="text-xl font-bold mb-4">Receitas</h2>
@@ -79,7 +114,7 @@
 </form>
 
 <table class="w-full bg-white rounded">
-<thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Status</th></tr></thead>
+<thead><tr><th scope="col" class="text-left p-2">Data</th><th scope="col" class="text-left p-2">Descrição</th><th scope="col" class="text-left p-2">Valor</th><th scope="col" class="text-left p-2">Status</th></tr></thead>
 <tbody id="listaReceitas"></tbody>
 </table>
 </section>
@@ -106,7 +141,7 @@
 </form>
 
 <table class="w-full bg-white rounded">
-<thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Forma</th></tr></thead>
+<thead><tr><th scope="col" class="text-left p-2">Data</th><th scope="col" class="text-left p-2">Descrição</th><th scope="col" class="text-left p-2">Valor</th><th scope="col" class="text-left p-2">Forma</th></tr></thead>
 <tbody id="listaDespesas"></tbody>
 </table>
 </section>
@@ -140,63 +175,110 @@
 
 <!-- FIREBASE + JS -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+let app=null,auth=null,cloud=null,firestoreFns=null;
+let firebaseLoaded=false;
 
-const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_AUTH_DOMAIN",
-  projectId: "SEU_PROJECT_ID",
-  appId: "SEU_APP_ID"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const cloud = getFirestore(app);
-
-let uid=null;
-let db={receitas:[],despesas:[]};
-let graf1,graf2;
-
-window.login=()=>signInWithEmailAndPassword(auth,email.value,senha.value);
-window.register=()=>createUserWithEmailAndPassword(auth,email.value,senha.value);
-window.logout=()=>signOut(auth);
-
-onAuthStateChanged(auth,async u=>{
-  if(u){
-    uid=u.uid;
-    loginScreen.classList.add('hidden');
-    app.classList.remove('hidden');
-    await carregar();
+async function carregarLibs(){
+  try{
+    const [{ initializeApp }, { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut }, { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc }] = await Promise.all([
+      import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"),
+      import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js")
+    ]);
+    const firebaseConfig = { apiKey:"SUA_API_KEY", authDomain:"SEU_AUTH_DOMAIN", projectId:"SEU_PROJECT_ID", appId:"SEU_APP_ID" };
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    cloud = getFirestore(app);
+    firestoreFns={collection,addDoc,getDocs,query,where,doc,updateDoc};
+    firebaseLoaded=true;
+    if(auth) onAuthStateChanged(auth,async u=>{
+      if(u){
+        uid=u.uid;
+        loginScreen.classList.add('hidden');
+        appEl.classList.remove('hidden');
+        await carregar();
+      }else iniciarSemLogin();
+    });
+  }catch(err){
+    console.warn('Firebase indisponível, seguindo offline',err);
+    firebaseLoaded=false;
+    iniciarSemLogin();
   }
-});
+  try{
+    if(!window.Chart){
+      const chartMod=await import("https://cdn.jsdelivr.net/npm/chart.js");
+      window.Chart=chartMod.default||chartMod;
+    }
+  }catch(err){
+    console.warn('Chart indisponível, usando stub',err);
+    window.Chart=class{constructor(){this.destroy=()=>{};} destroy(){} static register(){}};
+  }
+}
+
+const DEFAULT_UID='anon';
+let uid=DEFAULT_UID;
+let db={receitas:[],despesas:[],agenda:[]};
+const CAT_SERVICO='Serviço';
+const ESC_MAP={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;','/':'&#47;'};
+let graf1,graf2;
+let mesAgenda=new Date().toISOString().slice(0,7);
+const appEl=document.getElementById('app');
+const loginEl=document.getElementById('loginScreen');
+
+window.login=()=>auth?signInWithEmailAndPassword(auth,email.value,senha.value):iniciarSemLogin();
+window.register=()=>auth?createUserWithEmailAndPassword(auth,email.value,senha.value):iniciarSemLogin();
+window.logout=()=>auth?signOut(auth):iniciarSemLogin();
 
 window.show=id=>{
 document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
 document.getElementById(id).classList.remove('hidden');
 };
 
+async function iniciarSemLogin(){
+  uid=DEFAULT_UID;
+  loginEl.classList.add('hidden');
+  appEl.classList.remove('hidden');
+  show('agenda');
+  await carregar();
+}
+
+iniciarSemLogin();
+carregarLibs();
+
 async function carregar(){
   db.receitas=await load('receitas');
   db.despesas=await load('despesas');
+  db.agenda=await load('agenda');
   render();
 }
 
 async function load(col){
-  const q=query(collection(cloud,col),where('uid','==',uid));
-  const s=await getDocs(q);
-  return s.docs.map(d=>d.data());
+  try{
+    if(!cloud||!firestoreFns) return [];
+    const q=firestoreFns.query(firestoreFns.collection(cloud,col),firestoreFns.where('uid','==',uid));
+    const s=await firestoreFns.getDocs(q);
+    return s.docs.map(d=>({docId:d.id,...d.data()}));
+  }catch(err){
+    console.error(`Erro ao carregar ${col}`,err);
+    return [];
+  }
 }
 
 async function save(col,obj){
-  await addDoc(collection(cloud,col),{...obj,uid});
+  try{
+    if(!cloud||!firestoreFns) return null;
+    const ref=await firestoreFns.addDoc(firestoreFns.collection(cloud,col),{...obj,uid});
+    return ref.id;
+  }catch(err){
+    console.error(`Erro ao salvar em ${col}`,err);
+    return null;
+  }
 }
 
 formReceita.onsubmit=async e=>{
 e.preventDefault();
 let r={id:crypto.randomUUID(),data:rData.value,desc:rDesc.value,cat:rCat.value,valor:+rValor.value,status:rStatus.value};
-db.receitas.push(r);await save('receitas',r);render();e.target.reset();
+db.receitas.push(r);r.docId=await save('receitas',r);render();e.target.reset();
 };
 
 formDespesa.onsubmit=async e=>{
@@ -204,17 +286,104 @@ e.preventDefault();
 let p=dParcelas.value?+dParcelas.value:1;
 for(let i=1;i<=p;i++){
 let d={id:crypto.randomUUID(),data:dData.value,desc:dDesc.value,cat:dCat.value,valor:+dValor.value/p,forma:dForma.value};
-db.despesas.push(d);await save('despesas',d);
+db.despesas.push(d);d.docId=await save('despesas',d);
 }
 render();e.target.reset();
 };
 
+formAgenda.onsubmit=async e=>{
+e.preventDefault();
+let a={id:crypto.randomUUID(),data:aData.value,hora:aHora.value,cliente:aCliente.value,servico:aServico.value,valor:+aValor.value,status:'Pendente'};
+db.agenda.push(a);a.docId=await save('agenda',a);render();e.target.reset();
+};
+
 window.ajustarForma=()=>dParcelas.classList.toggle('hidden',dForma.value==='PIX');
 
+const esc=str=>String(str??'').replace(/[&<>"'`/]/g,m=>ESC_MAP[m]);
+const gerarDescAtendimento=(cliente,servico)=>{
+let extra=`${cliente||''} ${servico||''}`.trim();
+return extra?`Atendimento ${extra}`:'Atendimento concluído';
+};
+
 function render(){
-listaReceitas.innerHTML=db.receitas.map(r=>`<tr><td>${r.data}</td><td>${r.desc}</td><td>${r.valor}</td><td>${r.status}</td></tr>`).join('');
-listaDespesas.innerHTML=db.despesas.map(d=>`<tr><td>${d.data}</td><td>${d.desc}</td><td>${d.valor}</td><td>${d.forma}</td></tr>`).join('');
+agendaMes.value=mesAgenda;
+agendaMesLabel.textContent=new Date(mesAgenda+'-01').toLocaleString('pt-BR',{month:'long',year:'numeric'});
+const agDoMes=db.agenda.filter(a=>a.data?.startsWith(mesAgenda));
+listaAgenda.innerHTML=agDoMes.map(a=>{
+let action=a.status==='Concluído'?'':`<button class="text-blue-600 underline btn-concluir" data-agenda-id="${esc(a.id)}">Concluir</button>`;
+return `<tr><td class="p-2">${esc(a.data)}</td><td class="p-2">${esc(a.hora||'')}</td><td class="p-2">${esc(a.cliente)}</td><td class="p-2">${esc(a.servico)}</td><td class="p-2">${esc(a.valor)}</td><td class="p-2">${esc(a.status)}</td><td class="p-2">${action}</td></tr>`;
+}).join('');
+renderCalendario(agDoMes);
+listaReceitas.innerHTML=db.receitas.map(r=>`<tr><td class="p-2">${esc(r.data)}</td><td class="p-2">${esc(r.desc)}</td><td class="p-2">${esc(r.valor)}</td><td class="p-2">${esc(r.status)}</td></tr>`).join('');
+listaDespesas.innerHTML=db.despesas.map(d=>`<tr><td class="p-2">${esc(d.data)}</td><td class="p-2">${esc(d.desc)}</td><td class="p-2">${esc(d.valor)}</td><td class="p-2">${esc(d.forma)}</td></tr>`).join('');
 dashboard();
+}
+
+const concluirAgendamento=async id=>{
+if (!id || typeof id !== 'string') return;
+let ag=db.agenda.find(a=>a.id===id);
+if(!ag||ag.status==='Concluído')return;
+let statusAnterior=ag.status;
+ag.status='Concluído';
+let novaReceita=null;
+try{
+if(ag.docId&&cloud&&firestoreFns) await firestoreFns.updateDoc(firestoreFns.doc(cloud,'agenda',ag.docId),{status:'Concluído'});
+let valorNumerico=parseFloat(ag.valor);
+if(Number.isNaN(valorNumerico)) throw new Error('Valor de atendimento inválido');
+novaReceita={id:crypto.randomUUID(),data:ag.data,desc:gerarDescAtendimento(ag.cliente,ag.servico),cat:CAT_SERVICO,valor:valorNumerico,status:'Pago'};
+db.receitas.push(novaReceita);novaReceita.docId=await save('receitas',novaReceita);render();
+}catch(err){
+console.error(`Erro ao concluir agendamento ${id}:`,err);
+ag.status=statusAnterior;
+if(novaReceita) db.receitas=db.receitas.filter(r=>r.id!==novaReceita.id);
+render();
+}
+};
+
+let agendaHandlerAttached=false;
+const attachAgendaHandler=()=>{
+if(agendaHandlerAttached) return;
+agendaHandlerAttached=true;
+const tabela=document.getElementById('listaAgenda');
+if(!tabela) return;
+tabela.addEventListener('click',e=>{
+const btn=e.target.closest('.btn-concluir');
+if(!btn) return;
+concluirAgendamento(btn.dataset.agendaId);
+});
+};
+
+attachAgendaHandler();
+
+window.mudarMesAgenda=delta=>{
+  const d=new Date(mesAgenda+'-01');
+  d.setMonth(d.getMonth()+delta);
+  mesAgenda=d.toISOString().slice(0,7);
+  render();
+};
+
+window.definirMesAgenda=val=>{
+  if(!val) return;
+  mesAgenda=val;
+  render();
+};
+
+function renderCalendario(agDoMes){
+  const cal=document.getElementById('calAgenda');
+  if(!cal) return;
+  const [ano,mes]=mesAgenda.split('-').map(Number);
+  const primeiro=new Date(ano,mes-1,1);
+  const inicio=primeiro.getDay(); // 0=Dom
+  const diasMes=new Date(ano,mes,0).getDate();
+  let cells=[];
+  for(let i=0;i<inicio;i++) cells.push('');
+  for(let d=1;d<=diasMes;d++) cells.push(String(d));
+  cal.innerHTML=cells.map(dia=>{
+    if(!dia) return `<div class="h-24 border rounded bg-gray-50"></div>`;
+    const diaStr=`${mesAgenda}-${String(dia).padStart(2,'0')}`;
+    const itens=agDoMes.filter(a=>a.data===diaStr).map(a=>`<div class="text-xs truncate ${a.status==='Concluído'?'text-green-700':'text-blue-700'}">${esc(a.hora||'')} ${esc(a.cliente)}</div>`).join('');
+    return `<div class="h-24 border rounded p-1 bg-white flex flex-col"><div class="text-xs font-semibold">${dia}</div><div class="flex-1 space-y-1 overflow-hidden">${itens||'<span class="text-[10px] text-gray-400">Livre</span>'}</div></div>`;
+  }).join('');
 }
 
 function dashboard(){
