@@ -222,6 +222,7 @@ const CAT_SERVICO='Serviço';
 const ESC_MAP={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;','/':'&#47;'};
 let graf1,graf2;
 let mesAgenda=new Date().toISOString().slice(0,7);
+const LS_PREFIX='fc_thay_';
 const appEl=document.getElementById('app');
 const loginEl=document.getElementById('loginScreen');
 
@@ -254,24 +255,28 @@ async function carregar(){
 
 async function load(col){
   try{
-    if(!cloud||!firestoreFns) return [];
+    if(!cloud||!firestoreFns) return loadLocal(col);
     const q=firestoreFns.query(firestoreFns.collection(cloud,col),firestoreFns.where('uid','==',uid));
     const s=await firestoreFns.getDocs(q);
     return s.docs.map(d=>({docId:d.id,...d.data()}));
   }catch(err){
     console.error(`Erro ao carregar ${col}`,err);
-    return [];
+    return loadLocal(col);
   }
 }
 
 async function save(col,obj){
   try{
-    if(!cloud||!firestoreFns) return null;
+    if(!cloud||!firestoreFns){
+      saveLocal(col,obj);
+      return obj.id;
+    }
     const ref=await firestoreFns.addDoc(firestoreFns.collection(cloud,col),{...obj,uid});
     return ref.id;
   }catch(err){
     console.error(`Erro ao salvar em ${col}`,err);
-    return null;
+    saveLocal(col,obj);
+    return obj.id;
   }
 }
 
@@ -304,6 +309,27 @@ const gerarDescAtendimento=(cliente,servico)=>{
 let extra=`${cliente||''} ${servico||''}`.trim();
 return extra?`Atendimento ${extra}`:'Atendimento concluído';
 };
+
+function loadLocal(col){
+  try{
+    const raw=localStorage.getItem(LS_PREFIX+col);
+    if(!raw) return [];
+    return JSON.parse(raw);
+  }catch(e){
+    console.warn('Falha ao ler localStorage',e);
+    return [];
+  }
+}
+
+function saveLocal(col,obj){
+  const atual=loadLocal(col);
+  atual.push({...obj,uid});
+  try{
+    localStorage.setItem(LS_PREFIX+col,JSON.stringify(atual));
+  }catch(e){
+    console.warn('Falha ao salvar localStorage',e);
+  }
+}
 
 function render(){
 agendaMes.value=mesAgenda;
