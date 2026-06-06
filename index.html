@@ -1,3 +1,6 @@
+from pathlib import Path
+import zipfile, json
+
 html = r'''<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -204,6 +207,7 @@ function migrate(){
   if(!c.status)c.status='Ativo';
   migrateCaixaRows(c);
   ensureCadastros(c);
+  ensureSequentialProductCodes(c);
   syncAutoEstoque(c);
  });
 }
@@ -221,10 +225,20 @@ function codePrefix(c=current()){
  const prefix=(parts.slice(0,3).map(p=>p[0]).join('')||'PR').slice(0,3);
  return prefix.padEnd(3,'P');
 }
-function nextProductCode(c=current()){
+function nextProductCode(c=current(),usedCodes){
  const prefix=codePrefix(c);
- const next=(c.produtos||[]).reduce((max,p)=>{const match=String(p.codigo||'').match(/^[A-Z]+(\d+)$/);return match?Math.max(max,Number(match[1])):max;},0)+1;
+ const codes=usedCodes?Array.from(usedCodes):(c.produtos||[]).map(p=>p.codigo);
+ const next=codes.reduce((max,code)=>{const match=String(code||'').match(/^[A-Z]+(\d+)$/);return match?Math.max(max,Number(match[1])):max;},0)+1;
  return `${prefix}${String(next).padStart(3,'0')}`;
+}
+function ensureSequentialProductCodes(c=current()){
+ const used=new Set();
+ (c.produtos||[]).forEach(p=>{
+ let code=String(p.codigo||'').trim().toUpperCase();
+ if(!code||used.has(code))code=nextProductCode(c,used);
+ p.codigo=code;
+ used.add(code);
+ });
 }
 function findProductByCode(code,c=current()){return (c.produtos||[]).find(p=>String(p.codigo||'')===String(code||''));}
 function findProductByName(name,c=current()){return (c.produtos||[]).find(p=>String(p.produto||'').toLowerCase()===String(name||'').toLowerCase());}
@@ -232,15 +246,22 @@ function shouldSyncSale(row){return row&&row.tipo==='Receita'&&row.categoria==='
 function syncAutoEstoque(c=current()){
  const manual=(c.estoque||[]).filter(row=>row.origem!=='caixa');
  const auto=(c.caixa||[]).filter(shouldSyncSale).map(row=>{
-  const product=findProductByCode(row.produtoCodigo,c);
+ const product=findProductByCode(row.produtoCodigo,c);
+ const quantity=Math.max(1,num(row.quantidade));
+ const unitPrice=product?num(product.preco):num(row.valor);
+ if(product){
+  row.quantidade=quantity;
+  if(!row.descricao||row.descricao.startsWith(SALE_DESCRIPTION_PREFIX))row.descricao=`${SALE_DESCRIPTION_PREFIX}${product.produto}`;
+  row.valor=unitPrice*quantity;
+ }
   return {
    data:row.data||new Date().toISOString().slice(0,10),
    codigo:product?.codigo||row.produtoCodigo||'',
    produto:product?.produto||'Produto vinculado',
    tipo:'Saída',
-   quantidade:num(row.quantidade)||1,
+   quantidade:quantity,
    custo:num(product?.custo),
-   preco:num(product?.preco||row.valor),
+   preco:unitPrice,
    status:'Vendido',
    origem:'caixa'
   };
@@ -280,6 +301,7 @@ function optionLabel(option){return typeof option==='object'?option.label:option
 function opt(options,v){return options.map(o=>{const value=optionValue(o);const label=optionLabel(o);return `<option value="${htmlEscape(value)}" ${value==v?'selected':''}>${htmlEscape(label)}</option>`;}).join('');}
 function cellInput(table,i,key,v){
  const c=current();
+ if(table==='produtos'&&key==='codigo')return `<input type="text" value="${htmlEscape(v??'')}" readonly>`;
  const selects={mes:meses,tipo:['Receita','Despesa','Entrada','Saída','Troca','Perda','Devolução'],status:['Disponível','Vendido','Em andamento','Planejado','Concluído','Pausado']};
  if(table==='caixa'){selects.tipo=c.cadastros.tipos;selects.categoria=c.cadastros.categorias;selects.pagamento=c.cadastros.pagamentos;selects.conta=c.cadastros.contas;selects.produtoCodigo=[{value:'',label:'Selecione'}].concat((c.produtos||[]).map(p=>({value:p.codigo,label:`${p.codigo} — ${p.produto||'Produto'}`})));}
  if(selects[key]){
@@ -303,8 +325,15 @@ function syncRowWithProduct(table,row,key){
  if(table==='caixa'&&key==='produtoCodigo'){
  const product=findProductByCode(row.produtoCodigo,c);
  if(product&&(!row.descricao||row.descricao.startsWith(SALE_DESCRIPTION_PREFIX)))row.descricao=`${SALE_DESCRIPTION_PREFIX}${product.produto}`;
- if(product&&(row.valor===undefined||row.valor===null||row.valor===''))row.valor=num(product.preco);
  if(product&&!num(row.quantidade))row.quantidade=1;
+ }
+ if(table==='caixa'&&key==='quantidade'&&shouldSyncSale(row)){
+ const product=findProductByCode(row.produtoCodigo,c);
+ if(product){
+  const quantity=Math.max(1,num(row.quantidade));
+  row.quantidade=quantity;
+  row.valor=num(product.preco)*quantity;
+ }
  }
 }
 function updateRow(table,i,key,value){
