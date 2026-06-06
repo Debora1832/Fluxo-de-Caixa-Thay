@@ -125,7 +125,8 @@ function ensureCadastros(c){
  if(!c.cadastros||typeof c.cadastros!=='object')c.cadastros=defs;
  ['tipos','categorias','pagamentos','contas'].forEach(k=>{
   if(!Array.isArray(c.cadastros[k]))c.cadastros[k]=[...defs[k]];
-  c.cadastros[k]=[...new Set(c.cadastros[k].map(v=>String(v||'').trim()).filter(Boolean))];
+  const values=c.cadastros[k].map(v=>String(v||'').trim()).filter(Boolean);
+  c.cadastros[k]=[...new Set(values)];
   if(!c.cadastros[k].length)c.cadastros[k]=[...defs[k]];
  });
  if(c.nome&&!c.cadastros.contas.includes(c.nome))c.cadastros.contas.unshift(c.nome);
@@ -174,7 +175,7 @@ function cellInput(table,i,key,v){
  if(table==='caixa'){selects.tipo=c.cadastros.tipos;selects.categoria=c.cadastros.categorias;selects.pagamento=c.cadastros.pagamentos;selects.conta=c.cadastros.contas;}
  if(selects[key]){
   const options=[...selects[key]];
-  if(v&& !options.includes(v))options.push(v);
+  if(v && !options.includes(v))options.push(v);
   return `<select onchange="updateRow('${table}',${i},'${key}',this.value)">${opt(options,v)}</select>`;
  }
  const type=['custo','preco','estoqueInicial','quantidade','valor','ano','faturamento','lucro','vendas'].includes(key)?'number':(key==='data'?'date':'text');
@@ -183,7 +184,7 @@ function cellInput(table,i,key,v){
 function updateRow(table,i,key,value){current()[table][i][key]=value;save();renderAll();}
 function addRow(table){let row={...defaults[table]};if(table==='caixa'){const c=current();row.tipo=c.cadastros.tipos[0]||row.tipo;row.categoria=c.cadastros.categorias[0]||row.categoria;row.pagamento=c.cadastros.pagamentos[0]||row.pagamento;row.conta=c.cadastros.contas[0]||c.nome;}current()[table].push(row);save();renderAll();}
 function delRow(table,i){if(confirm('Excluir esta linha?')){current()[table].splice(i,1);save();renderAll();}}
-function addCadastroItem(key){const input=document.getElementById(`cad_${key}`);if(!input)return;const value=input.value.trim();if(!value)return;const list=current().cadastros[key];if(list.some(v=>v.toLowerCase()===value.toLowerCase())){alert('Item já cadastrado.');return;}list.push(value);save();renderAll();}
+function addCadastroItem(key){const input=document.getElementById(`cad_${key}`);if(!input)return;const value=input.value.trim();if(!value)return;const list=current().cadastros[key];if(list.some(v=>v.toLowerCase()===value.toLowerCase())){alert('Item já cadastrado.');return;}list.push(value);input.value='';save();renderAll();}
 function delCadastroItem(key,index){current().cadastros[key].splice(index,1);ensureCadastros(current());save();renderAll();}
 function rowClass(table,row){
  if(table==='caixa'){
