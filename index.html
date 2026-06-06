@@ -39,7 +39,7 @@ body.home-mode .client-mini,body.home-mode .nav-title,body.home-mode .nav{displa
 .client-card{background:#f5eded;border:1px solid #a88f8b;border-radius:0;box-shadow:none;padding:12px;position:relative;overflow:hidden}
 .client-card:before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:#6f1d14}
 .client-card h3{margin:7px 0 5px;font-size:20px}.client-card p{margin:3px 0;color:var(--muted);font-size:12px}
-.badge{display:inline-flex;border-radius:999px;background:#f5eded;color:#6f1d14;border:1px solid #a67d76;padding:4px 8px;font-size:11px;font-weight:800;margin:6px 5px 0 0}
+.badge{display:inline-flex;border-radius:3px;background:#f5eded;color:#6f1d14;border:1px solid #a67d76;padding:4px 8px;font-size:11px;font-weight:800;margin:6px 5px 0 0}
 .badge.blue{background:#e7ebfb;color:#0d2f8b;border-color:#8ca0df}.badge.green{background:#e8f6ea;color:#0e5d12;border-color:#7ec184}
 .card-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.card-stat{background:#f8f4f3;border:1px solid #c6b2ae;border-radius:0;padding:8px}
 .card-stat small{display:block;color:var(--muted);font-size:10px}.card-stat b{display:block;margin-top:3px}.card-actions{display:flex;gap:6px;flex-wrap:wrap}
@@ -141,7 +141,16 @@ function cellInput(table,i,key,v){const selects={mes:meses,tipo:['Receita','Desp
 function updateRow(table,i,key,value){current()[table][i][key]=value;save();renderAll();}
 function addRow(table){let row={...defaults[table]};if(table==='caixa')row.conta=current().nome;current()[table].push(row);save();renderAll();}
 function delRow(table,i){if(confirm('Excluir esta linha?')){current()[table].splice(i,1);save();renderAll();}}
-function rowClass(table,row){if(table==='caixa'){if(row.tipo==='Receita')return'row-receita';if(row.tipo==='Despesa'&&row.categoria==='Estoque / Mercadoria')return'row-despesa-vendas';if(row.tipo==='Despesa'&&['Taxas','Impostos'].includes(row.categoria))return'row-impostos';if(row.tipo==='Despesa')return'row-despesa';}if(table==='estoque'&&row.tipo==='Entrada')return'row-invest';return'';}
+function rowClass(table,row){
+ if(table==='caixa'){
+  if(row.tipo==='Receita')return'row-receita';
+  if(row.tipo==='Despesa'&&row.categoria==='Estoque / Mercadoria')return'row-despesa-vendas';
+  if(row.tipo==='Despesa'&&['Taxas','Impostos'].includes(row.categoria))return'row-impostos';
+  if(row.tipo==='Despesa')return'row-despesa';
+ }
+ if(table==='estoque'&&row.tipo==='Entrada')return'row-invest';
+ return'';
+}
 
 function renderTable(table,tbodyId){let body=document.getElementById(tbodyId);if(!body)return;let rows=current()[table]||[];body.innerHTML=rows.length?rows.map((r,i)=>`<tr class="${rowClass(table,r)}">${schemas[table].map(k=>`<td>${cellInput(table,i,k,r[k])}</td>`).join('')}<td><button class="btn red small" onclick="delRow('${table}',${i})">Excluir</button></td></tr>`).join(''):`<tr><td colspan="20"><div class="empty">Nenhum registro cadastrado.</div></td></tr>`;}
 function renderHome(){document.getElementById('clientGrid').innerHTML=app.clients.map(c=>`<div class="client-card"><h3>${c.nome}</h3><p>${c.segmento}</p><span class="badge">${c.tipo}</span><span class="badge blue">${labelOp(c.operacao)}</span><span class="badge green">${c.status||'Ativo'}</span><div class="card-stats"><div class="card-stat"><small>Receita</small><b>${money(receitas(c))}</b></div><div class="card-stat"><small>Saldo</small><b>${money(saldo(c))}</b></div></div><div class="card-actions"><button class="btn small green" onclick="selectClient('${c.id}')">Abrir</button><button class="btn small secondary" onclick="app.current='${c.id}';save();renderAll();go('cliente')">Editar</button><button class="btn small red" onclick="deleteClient('${c.id}')">Excluir</button></div></div>`).join('');}
