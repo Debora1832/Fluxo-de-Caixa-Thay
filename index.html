@@ -142,7 +142,7 @@ tbody tr.row-receita:hover td,tbody tr.row-invest:hover td,tbody tr.row-saida:ho
 
 <section class="page" id="produtos"><div class="topbar"><div class="title"><h2>Cadastro de produtos</h2><p>Produtos e mercadorias com estoque.</p></div><button class="btn green" onclick="addRow('produtos')">+ Produto</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Código</th><th>Produto</th><th>Categoria</th><th>Tamanho</th><th>Cor</th><th>Fornecedor</th><th>Custo</th><th>Preço venda</th><th>Estoque inicial</th><th>Ações</th></tr></thead><tbody id="tblProdutos"></tbody></table></div></div></section>
 <section class="page" id="servicos"><div class="topbar"><div class="title"><h2>Cadastro de serviços</h2><p>Serviços prestados sem controle de estoque.</p></div><button class="btn green" onclick="addRow('servicos')">+ Serviço</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Código</th><th>Serviço</th><th>Categoria</th><th>Tempo médio</th><th>Custo estimado</th><th>Preço cobrado</th><th>Observação</th><th>Ações</th></tr></thead><tbody id="tblServicos"></tbody></table></div></div></section>
-<section class="page" id="estoque"><div class="topbar"><div class="title"><h2>Movimentação de estoque</h2><p>Entradas, saídas e ajustes com integração automática às vendas.</p></div><button class="btn green" onclick="addRow('estoque')">+ Movimentação manual</button></div><div class="page-note"><div>📦</div><div><b>Estoque sincronizado com o caixa</b>Vendas lançadas no fluxo de caixa com produto e quantidade geram saídas automáticas nesta tela.</div></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Código</th><th>Produto</th><th>Tipo</th><th>Quantidade</th><th>Custo unit.</th><th>Preço venda</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tblEstoque"></tbody></table></div></div></section>
+<section class="page" id="estoque"><div class="topbar"><div class="title"><h2>Movimentação de estoque</h2><p>Entradas, saídas e ajustes com integração automática às vendas.</p></div><button class="btn green" onclick="addRow('estoque')">+ Movimentação manual</button></div><div class="page-note"><div>📦</div><div><b>Estoque sincronizado com o caixa</b> Vendas lançadas no fluxo de caixa com produto e quantidade geram saídas automáticas nesta tela.</div></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Código</th><th>Produto</th><th>Tipo</th><th>Quantidade</th><th>Custo unit.</th><th>Preço venda</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tblEstoque"></tbody></table></div></div></section>
 <section class="page" id="cadastros"><div class="topbar"><div class="title"><h2>Cadastro base do fluxo de caixa</h2><p>Cadastre tipos, categorias, pagamentos e contas que o fluxo de caixa vai puxar.</p></div></div><div class="panel"><div class="form-grid" id="cadastroGrid"></div></div></section>
 <section class="page" id="caixa"><div class="topbar"><div class="title"><h2>Fluxo de caixa</h2><p>Entradas, saídas e contas com vínculo opcional ao produto vendido.</p></div><button class="btn green" onclick="addRow('caixa')">+ Lançamento</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Mês</th><th>Ano</th><th>Tipo</th><th>Categoria</th><th>Produto</th><th>Qtd.</th><th>Descrição</th><th>Valor</th><th>Pagamento</th><th>Conta</th><th>Ações</th></tr></thead><tbody id="tblCaixa"></tbody></table></div></div></section>
 <section class="page" id="dre"><div class="topbar"><div class="title"><h2>DRE simplificada</h2><p>Resultado financeiro.</p></div></div><div class="panel"><div class="form-grid" style="margin-bottom:16px"><div class="field"><label>Mês</label><select id="dreMes" onchange="renderDRE()"></select></div><div class="field"><label>Ano</label><input id="dreAno" type="number" value="2026" onchange="renderDRE()"></div></div><div class="table-wrap"><table class="dre-table"><tbody id="dreBox"></tbody></table></div></div></section>
@@ -214,7 +214,9 @@ function save(){localStorage.setItem('finmei_pro_fire_v2',JSON.stringify(app));}
 function current(){return app.clients.find(c=>c.id===app.current)||app.clients[0];}
 function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
 function num(v){return Number(String(v??0).replace(',','.'))||0;}
+function htmlEscape(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function normalizeText(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+const SALE_DESCRIPTION_PREFIX='Venda - ';
 function codePrefix(c=current()){
  const existing=(c.produtos||[]).map(p=>String(p.codigo||'').match(/^([A-Z]+)/)).find(Boolean);
  if(existing)return existing[1];
@@ -243,8 +245,7 @@ function syncAutoEstoque(c=current()){
    custo:num(product?.custo),
    preco:num(product?.preco||row.valor),
    status:'Vendido',
-   origem:'caixa',
-   referencia:`caixa_${index}`
+   origem:'caixa'
   };
  });
  c.estoque=[...manual,...auto];
@@ -277,14 +278,16 @@ function setClient(k,v){
  }else c[k]=v;
  save();renderAll();
 }
-function opt(options,v){return options.map(o=>{const value=typeof o==='object'?o.value:o;const label=typeof o==='object'?o.label:o;return `<option value="${value??''}" ${value==v?'selected':''}>${label}</option>`;}).join('');}
+function optionValue(option){return typeof option==='object'?option.value:option;}
+function optionLabel(option){return typeof option==='object'?option.label:option;}
+function opt(options,v){return options.map(o=>{const value=optionValue(o);const label=optionLabel(o);return `<option value="${htmlEscape(value)}" ${value==v?'selected':''}>${htmlEscape(label)}</option>`;}).join('');}
 function cellInput(table,i,key,v){
  const c=current();
  const selects={mes:meses,tipo:['Receita','Despesa','Entrada','Saída','Troca','Perda','Devolução'],status:['Disponível','Vendido','Em andamento','Planejado','Concluído','Pausado']};
  if(table==='caixa'){selects.tipo=c.cadastros.tipos;selects.categoria=c.cadastros.categorias;selects.pagamento=c.cadastros.pagamentos;selects.conta=c.cadastros.contas;selects.produtoCodigo=[{value:'',label:'Selecione'}].concat((c.produtos||[]).map(p=>({value:p.codigo,label:`${p.codigo} — ${p.produto||'Produto'}`})));}
  if(selects[key]){
   const options=[...selects[key]];
-  if(v && !options.some(option=>(typeof option==='object'?option.value:option)===v))options.push(v);
+  if(v && !options.some(option=>optionValue(option)===v))options.push(v);
   return `<select onchange="updateRow('${table}',${i},'${key}',this.value)">${opt(options,v)}</select>`;
  }
  const type=['custo','preco','estoqueInicial','quantidade','valor','ano','faturamento','lucro','vendas'].includes(key)?'number':(key==='data'?'date':'text');
@@ -302,7 +305,7 @@ function syncRowWithProduct(table,row,key){
  }
  if(table==='caixa'&&key==='produtoCodigo'){
  const product=findProductByCode(row.produtoCodigo,c);
- if(product&&(!row.descricao||row.descricao.startsWith('Venda - ')))row.descricao=`Venda - ${product.produto}`;
+ if(product&&(!row.descricao||row.descricao.startsWith(SALE_DESCRIPTION_PREFIX)))row.descricao=`${SALE_DESCRIPTION_PREFIX}${product.produto}`;
  if(product&&!num(row.valor))row.valor=num(product.preco);
  if(product&&!num(row.quantidade))row.quantidade=1;
  }
