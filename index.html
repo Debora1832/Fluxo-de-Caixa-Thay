@@ -538,10 +538,10 @@ function openPricingModal(i){
  const product=current().produtos[i];
  const p=product.precificacao||{};
  document.getElementById('pmProductName').textContent=product.produto||'Produto';
- document.getElementById('pmCustoPeca').value=p.custoPeca!=null?p.custoPeca:(product.custo||0);
- document.getElementById('pmFrete').value=p.freteUnitario!=null?p.freteUnitario:0;
- document.getElementById('pmEmbalagem').value=p.embalagem!=null?p.embalagem:0;
- document.getElementById('pmOutros').value=p.outrosCustos!=null?p.outrosCustos:0;
+ document.getElementById('pmCustoPeca').value=p.custoPeca??product.custo??0;
+ document.getElementById('pmFrete').value=p.freteUnitario??0;
+ document.getElementById('pmEmbalagem').value=p.embalagem??0;
+ document.getElementById('pmOutros').value=p.outrosCustos??0;
  document.getElementById('pmTaxaCartao').value=p.taxaCartao!=null?(p.taxaCartao*100).toFixed(2):5;
  document.getElementById('pmComissao').value=p.comissao!=null?(p.comissao*100).toFixed(2):0;
  document.getElementById('pmMargem').value=p.margemLucro!=null?(p.margemLucro*100).toFixed(2):40;
@@ -599,9 +599,15 @@ function calculatePricing(){
 function applyPricingToProduct(){
  if(_pricingModalIndex===null||!_pricingCalc)return;
  const product=current().produtos[_pricingModalIndex];
- product.preco=Math.round(_pricingCalc.precoIdeal*100)/100;
- product.custo=Math.round(_pricingCalc.custoPeca*100)/100;
- product.precificacao={..._pricingCalc};
+ product.preco=parseFloat(_pricingCalc.precoIdeal.toFixed(2));
+ product.custo=parseFloat(_pricingCalc.custoPeca.toFixed(2));
+ // armazenar apenas os inputs; valores derivados são recalculados ao reabrir
+ product.precificacao={
+  custoPeca:_pricingCalc.custoPeca,freteUnitario:_pricingCalc.freteUnitario,
+  embalagem:_pricingCalc.embalagem,outrosCustos:_pricingCalc.outrosCustos,
+  taxaCartao:_pricingCalc.taxaCartao,comissao:_pricingCalc.comissao,
+  margemLucro:_pricingCalc.margemLucro
+ };
  syncAutoEstoque(current());save();renderAll();closePricingModal();
 }
 function renderAll(){renderDreSelect();renderHome();renderClientForm();renderDashboard();renderVisibility();renderCadastros();renderTable('produtos','tblProdutos');renderTable('servicos','tblServicos');renderTable('estoque','tblEstoque');renderTable('caixa','tblCaixa');renderTable('metas','tblMetas');renderDRE();renderReport();renderFirebaseStatus();}
