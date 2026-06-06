@@ -81,44 +81,60 @@ tbody tr:not([class]):hover td{background:#f8fafc}
 td input,td select{width:100%;min-width:98px;border:1px solid transparent;background:transparent;border-radius:4px;padding:3px 6px;outline:none;color:inherit;font-size:12px}
 td input:focus,td select:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 2px rgba(190,18,60,.1);color:var(--text)}
 .empty{padding:36px 24px;text-align:center;color:var(--muted);font-size:13px}
-tbody tr.row-receita td{background:#166534;color:#fff;font-weight:600}
-tbody tr.row-invest td{background:#475569;color:#fff;font-weight:600}
-tbody tr.row-saida td{background:#7f1d1d;color:#fff;font-weight:600}
-tbody tr.row-ajuste td{background:#92400e;color:#fff;font-weight:600}
-tbody tr.row-despesa td{background:#991b1b;color:#fff;font-weight:600}
-tbody tr.row-despesa-vendas td{background:#9a3412;color:#fff;font-weight:600}
-tbody tr.row-impostos td{background:#7c2d12;color:#fff;font-weight:600}
+tbody tr.row-receita td{background:rgba(22,101,52,.09);color:#14532d;font-weight:600;border-left:3px solid #4ade80}
+tbody tr.row-invest td{background:rgba(71,85,105,.07);color:#334155;font-weight:600;border-left:3px solid #94a3b8}
+tbody tr.row-saida td{background:rgba(153,27,27,.09);color:#7f1d1d;font-weight:600;border-left:3px solid #f87171}
+tbody tr.row-ajuste td{background:rgba(146,64,14,.08);color:#7c2d12;font-weight:600;border-left:3px solid #fb923c}
+tbody tr.row-despesa td{background:rgba(153,27,27,.07);color:#991b1b;font-weight:600;border-left:3px solid #fca5a5}
+tbody tr.row-despesa-vendas td{background:rgba(154,52,18,.08);color:#9a3412;font-weight:600;border-left:3px solid #fdba74}
+tbody tr.row-impostos td{background:rgba(124,45,18,.09);color:#7c2d12;font-weight:600;border-left:3px solid #fcd34d}
 tbody tr.row-receita td input,tbody tr.row-receita td select,
 tbody tr.row-invest td input,tbody tr.row-invest td select,
 tbody tr.row-saida td input,tbody tr.row-saida td select,
 tbody tr.row-ajuste td input,tbody tr.row-ajuste td select,
 tbody tr.row-despesa td input,tbody tr.row-despesa td select,
 tbody tr.row-despesa-vendas td input,tbody tr.row-despesa-vendas td select,
-tbody tr.row-impostos td input,tbody tr.row-impostos td select{color:#fff}
-tbody tr.row-receita:hover td,tbody tr.row-invest:hover td,tbody tr.row-saida:hover td,tbody tr.row-ajuste:hover td,tbody tr.row-despesa:hover td,tbody tr.row-despesa-vendas:hover td,tbody tr.row-impostos:hover td{filter:brightness(1.08)}
+tbody tr.row-impostos td input,tbody tr.row-impostos td select{color:var(--text);background:#fff;border-radius:4px}
+tbody tr.row-receita:hover td,tbody tr.row-invest:hover td,tbody tr.row-saida:hover td,tbody tr.row-ajuste:hover td,tbody tr.row-despesa:hover td,tbody tr.row-despesa-vendas:hover td,tbody tr.row-impostos:hover td{filter:brightness(.97)}
 .page-note{display:flex;align-items:flex-start;gap:10px;padding:14px 16px;background:#f8fafc;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;color:var(--muted);font-size:13px}
 .page-note b{display:block;color:var(--text);margin-bottom:3px}
 .table-tag{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:999px;background:#e0f2fe;color:#075985;font-size:11px;font-weight:700;white-space:nowrap}
 .dre-table{min-width:700px}
 .dre-table td{padding:11px 15px;font-weight:600;font-size:13px}
 .dre-head td{background:#f8fafc;text-transform:uppercase;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;border-bottom:2px solid var(--border)}
-.dre-receita td{background:#166534;color:#fff}
-.dre-custo td,.dre-taxas td,.dre-despesas td{background:#991b1b;color:#fff}
-.dre-subtotal td{background:#1e293b;color:#fff}
-.dre-total.good td{background:#166534;color:#fff;font-size:14px}
-.dre-total.bad td{background:#991b1b;color:#fff;font-size:14px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}.modal.open{display:flex}
 .notice{background:var(--amber-light);border:1px solid #fcd34d;border-radius:var(--radius-sm);padding:12px 15px;color:var(--amber);font-size:13px;line-height:1.5}
 .notice.ok{background:var(--green-light);border-color:#86efac;color:var(--green)}
 .notice.err{background:var(--red-light);border-color:#fca5a5;color:var(--red)}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}.modal.open{display:flex}
 .modal-card{background:#fff;border-radius:var(--radius-lg);border:1px solid var(--border);width:min(680px,100%);box-shadow:var(--shadow-lg);padding:26px}
 .modal-card h3{margin:0 0 20px;font-size:17px;font-weight:700;color:var(--text);letter-spacing:-.01em}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
 .cadastro-list{display:grid;gap:6px;margin-bottom:10px}
 .cadastro-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);font-size:13px;color:var(--text)}
 .cadastro-add{display:flex;gap:8px}.cadastro-add input{flex:1}
+.dre-receita td{background:rgba(22,101,52,.09);color:#14532d}
+.dre-custo td,.dre-taxas td,.dre-despesas td{background:rgba(153,27,27,.07);color:#991b1b}
+.dre-subtotal td{background:rgba(30,41,59,.08);color:#1e293b}
+.dre-total.good td{background:rgba(22,101,52,.12);color:#14532d;font-size:14px}
+.dre-total.bad td{background:rgba(153,27,27,.12);color:#991b1b;font-size:14px}
+.pm-card{max-width:780px;width:min(780px,100%);max-height:90vh;overflow-y:auto}
+.pm-grid{display:grid;gap:14px;margin-bottom:18px}
+.pm-section{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.pm-section-title{margin:0 0 10px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--muted)}
+.pm-results{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:4px}
+.pm-res-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;text-align:center;transition:var(--transition)}
+.pm-res-card.pm-highlight{background:linear-gradient(135deg,#dcfce7,#f0fdf4);border-color:#86efac}
+.pm-res-card.pm-markup-bad{background:#fff1f2;border-color:#fca5a5}
+.pm-res-card.pm-markup-warn{background:#fef3c7;border-color:#fcd34d}
+.pm-res-card.pm-markup-ok{background:#dcfce7;border-color:#86efac}
+.pm-res-label{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap}
+.pm-res-value{font-size:17px;font-weight:800;color:var(--text);margin-top:5px;letter-spacing:-.02em}
+.pm-markup-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px}
+.pm-markup-bad .pm-markup-badge{background:#fee2e2;color:#991b1b}
+.pm-markup-warn .pm-markup-badge{background:#fef3c7;color:#b45309}
+.pm-markup-ok .pm-markup-badge{background:#dcfce7;color:#166534}
 @media(max-width:1000px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.cards{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}.main{padding:18px 16px 28px}}
-@media(max-width:620px){.cards{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}}
+@media(max-width:620px){.cards{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}.pm-results{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body class="home-mode">
@@ -151,6 +167,44 @@ tbody tr.row-receita:hover td,tbody tr.row-invest:hover td,tbody tr.row-saida:ho
 </main></div>
 
 <div class="modal" id="clientModal"><div class="modal-card"><h3>Novo cliente</h3><div class="form-grid"><div class="field"><label>Nome da loja/MEI</label><input id="newNome" placeholder="Ex.: NC Store"></div><div class="field"><label>Segmento</label><input id="newSegmento" placeholder="Ex.: Roupas femininas"></div><div class="field"><label>Tipo</label><select id="newTipo"><option>MEI</option><option>Loja online</option><option>Prestador de serviço</option><option>Empresa informal</option><option>Outro</option></select></div><div class="field"><label>Operação</label><select id="newOperacao"><option value="produto">Venda de produto</option><option value="servico">Prestação de serviço</option><option value="ambos">Produto e serviço</option></select></div></div><div class="modal-actions"><button class="btn secondary" onclick="closeClientModal()">Cancelar</button><button class="btn green" onclick="createClient()">Criar</button></div></div></div>
+
+<div class="modal" id="pricingModal">
+<div class="modal-card pm-card">
+<h3>💰 Calcular Preço — <span id="pmProductName" style="font-weight:500;color:var(--muted)"></span></h3>
+<div id="pmWarn" class="notice err" style="margin-bottom:14px;display:none">A soma dos percentuais não pode ser maior ou igual a 100%.</div>
+<div class="pm-grid">
+<div class="pm-section">
+<p class="pm-section-title">Custos (R$)</p>
+<div class="form-grid" style="grid-template-columns:repeat(2,1fr);gap:10px">
+<div class="field"><label>Custo da peça</label><input type="number" id="pmCustoPeca" step="0.01" min="0" oninput="calculatePricing()"></div>
+<div class="field"><label>Frete unitário</label><input type="number" id="pmFrete" step="0.01" min="0" oninput="calculatePricing()"></div>
+<div class="field"><label>Embalagem</label><input type="number" id="pmEmbalagem" step="0.01" min="0" oninput="calculatePricing()"></div>
+<div class="field"><label>Outros custos</label><input type="number" id="pmOutros" step="0.01" min="0" oninput="calculatePricing()"></div>
+</div>
+</div>
+<div class="pm-section">
+<p class="pm-section-title">Percentuais (%)</p>
+<div class="form-grid" style="grid-template-columns:repeat(3,1fr);gap:10px">
+<div class="field"><label>Taxa de cartão</label><input type="number" id="pmTaxaCartao" step="0.1" min="0" max="99" oninput="calculatePricing()"></div>
+<div class="field"><label>Comissão</label><input type="number" id="pmComissao" step="0.1" min="0" max="99" oninput="calculatePricing()"></div>
+<div class="field"><label>Margem de lucro</label><input type="number" id="pmMargem" step="0.1" min="0" max="99" oninput="calculatePricing()"></div>
+</div>
+</div>
+</div>
+<div class="pm-results">
+<div class="pm-res-card"><div class="pm-res-label">Custo Total</div><div class="pm-res-value" id="pmResCustoTotal">R$ 0,00</div></div>
+<div class="pm-res-card"><div class="pm-res-label">Preço Mínimo</div><div class="pm-res-value" id="pmResPrecoMinimo">R$ 0,00</div></div>
+<div class="pm-res-card pm-highlight"><div class="pm-res-label">Preço Ideal ✨</div><div class="pm-res-value" id="pmResPrecoIdeal">R$ 0,00</div></div>
+<div class="pm-res-card"><div class="pm-res-label">Lucro Unitário</div><div class="pm-res-value" id="pmResLucro">R$ 0,00</div></div>
+<div class="pm-res-card"><div class="pm-res-label">Margem Real</div><div class="pm-res-value" id="pmResMargem">0,0%</div></div>
+<div class="pm-res-card" id="pmMarkupCard"><div class="pm-res-label">Markup <span id="pmMarkupLabel" class="pm-markup-badge"></span></div><div class="pm-res-value" id="pmResMarkup">0,00×</div></div>
+</div>
+<div class="modal-actions">
+<button class="btn secondary" onclick="closePricingModal()">Cancelar</button>
+<button class="btn green" onclick="applyPricingToProduct()">Usar Preço Ideal</button>
+</div>
+</div>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
@@ -388,7 +442,9 @@ function renderTable(table,tbodyId){
   .join('');
  const action=locked
   ? '<span class="table-tag">Automático</span>'
-  : `<button class="btn red small" onclick="delRow('${table}',${i})">Excluir</button>`;
+  : (table==='produtos'
+   ? `<button class="btn green small" onclick="openPricingModal(${i})" style="margin-right:4px">Calcular Preço</button><button class="btn red small" onclick="delRow('${table}',${i})">Excluir</button>`
+   : `<button class="btn red small" onclick="delRow('${table}',${i})">Excluir</button>`);
  return `<tr class="${rowClass(table,r)}">${cells}<td>${action}</td></tr>`;
  }).join('');
 }
@@ -474,9 +530,83 @@ async function loadFromFirebase(){
 
 function exportBackup(){const blob=new Blob([JSON.stringify(app,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup_finmei_pro.json';a.click();}
 function importBackup(ev){const file=ev.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{try{app=JSON.parse(e.target.result);migrate();save();renderAll();alert('Backup importado com sucesso.');}catch(err){alert('Arquivo inválido.');}};reader.readAsText(file);}
+
+let _pricingModalIndex=null;
+let _pricingCalc=null;
+function openPricingModal(i){
+ _pricingModalIndex=i;
+ const product=current().produtos[i];
+ const p=product.precificacao||{};
+ document.getElementById('pmProductName').textContent=product.produto||'Produto';
+ document.getElementById('pmCustoPeca').value=p.custoPeca!=null?p.custoPeca:(product.custo||0);
+ document.getElementById('pmFrete').value=p.freteUnitario!=null?p.freteUnitario:0;
+ document.getElementById('pmEmbalagem').value=p.embalagem!=null?p.embalagem:0;
+ document.getElementById('pmOutros').value=p.outrosCustos!=null?p.outrosCustos:0;
+ document.getElementById('pmTaxaCartao').value=p.taxaCartao!=null?(p.taxaCartao*100).toFixed(2):5;
+ document.getElementById('pmComissao').value=p.comissao!=null?(p.comissao*100).toFixed(2):0;
+ document.getElementById('pmMargem').value=p.margemLucro!=null?(p.margemLucro*100).toFixed(2):40;
+ document.getElementById('pricingModal').classList.add('open');
+ calculatePricing();
+}
+function closePricingModal(){
+ document.getElementById('pricingModal').classList.remove('open');
+ _pricingModalIndex=null;_pricingCalc=null;
+}
+function calculatePricing(){
+ const custoPeca=num(document.getElementById('pmCustoPeca').value);
+ const freteUnitario=num(document.getElementById('pmFrete').value);
+ const embalagem=num(document.getElementById('pmEmbalagem').value);
+ const outrosCustos=num(document.getElementById('pmOutros').value);
+ const taxaCartao=num(document.getElementById('pmTaxaCartao').value)/100;
+ const comissao=num(document.getElementById('pmComissao').value)/100;
+ const margemLucro=num(document.getElementById('pmMargem').value)/100;
+ const warn=document.getElementById('pmWarn');
+ const ids=['pmResCustoTotal','pmResPrecoMinimo','pmResPrecoIdeal','pmResLucro','pmResMargem','pmResMarkup'];
+ if(taxaCartao+comissao+margemLucro>=1){
+  warn.style.display='block';
+  ids.forEach(id=>{document.getElementById(id).textContent='—';});
+  document.getElementById('pmMarkupLabel').textContent='';
+  document.getElementById('pmMarkupCard').className='pm-res-card';
+  _pricingCalc=null;return;
+ }
+ warn.style.display='none';
+ const custoTotal=custoPeca+freteUnitario+embalagem+outrosCustos;
+ let precoMinimo=0,precoIdeal=0,lucroUnitario=0,margemReal=0,markup=0;
+ if(custoTotal>0){
+  const divMin=1-taxaCartao-comissao;
+  const divIdeal=1-taxaCartao-comissao-margemLucro;
+  precoMinimo=divMin>0?custoTotal/divMin:0;
+  precoIdeal=divIdeal>0?custoTotal/divIdeal:0;
+  lucroUnitario=precoIdeal-custoTotal;
+  margemReal=precoIdeal>0?(lucroUnitario/precoIdeal)*100:0;
+  markup=custoTotal>0?precoIdeal/custoTotal:0;
+ }
+ document.getElementById('pmResCustoTotal').textContent=money(custoTotal);
+ document.getElementById('pmResPrecoMinimo').textContent=money(precoMinimo);
+ document.getElementById('pmResPrecoIdeal').textContent=money(precoIdeal);
+ document.getElementById('pmResLucro').textContent=money(lucroUnitario);
+ document.getElementById('pmResMargem').textContent=margemReal.toFixed(1).replace('.',',')+' %';
+ document.getElementById('pmResMarkup').textContent=markup.toFixed(2).replace('.',',')+' ×';
+ const card=document.getElementById('pmMarkupCard');
+ const label=document.getElementById('pmMarkupLabel');
+ card.className='pm-res-card';
+ if(markup>0&&markup<2.0){card.classList.add('pm-markup-bad');label.textContent='Markup baixo';}
+ else if(markup>=2.0&&markup<2.5){card.classList.add('pm-markup-warn');label.textContent='Markup médio';}
+ else if(markup>=2.5){card.classList.add('pm-markup-ok');label.textContent='Markup saudável';}
+ else{label.textContent='';}
+ _pricingCalc={custoPeca,freteUnitario,embalagem,outrosCustos,taxaCartao,comissao,margemLucro,custoTotal,precoMinimo,precoIdeal,lucroUnitario,margemReal,markup};
+}
+function applyPricingToProduct(){
+ if(_pricingModalIndex===null||!_pricingCalc)return;
+ const product=current().produtos[_pricingModalIndex];
+ product.preco=Math.round(_pricingCalc.precoIdeal*100)/100;
+ product.custo=Math.round(_pricingCalc.custoPeca*100)/100;
+ product.precificacao={..._pricingCalc};
+ syncAutoEstoque(current());save();renderAll();closePricingModal();
+}
 function renderAll(){renderDreSelect();renderHome();renderClientForm();renderDashboard();renderVisibility();renderCadastros();renderTable('produtos','tblProdutos');renderTable('servicos','tblServicos');renderTable('estoque','tblEstoque');renderTable('caixa','tblCaixa');renderTable('metas','tblMetas');renderDRE();renderReport();renderFirebaseStatus();}
 
-window.openClientModal=openClientModal;window.closeClientModal=closeClientModal;window.createClient=createClient;window.deleteClient=deleteClient;window.selectClient=selectClient;window.go=go;window.setClient=setClient;window.updateRow=updateRow;window.addRow=addRow;window.delRow=delRow;window.addCadastroItem=addCadastroItem;window.delCadastroItem=delCadastroItem;window.renderAll=renderAll;window.exportBackup=exportBackup;window.importBackup=importBackup;window.syncToFirebase=syncToFirebase;window.loadFromFirebase=loadFromFirebase;window.app=app;window.save=save;
+window.openClientModal=openClientModal;window.closeClientModal=closeClientModal;window.createClient=createClient;window.deleteClient=deleteClient;window.selectClient=selectClient;window.go=go;window.setClient=setClient;window.updateRow=updateRow;window.addRow=addRow;window.delRow=delRow;window.addCadastroItem=addCadastroItem;window.delCadastroItem=delCadastroItem;window.renderAll=renderAll;window.exportBackup=exportBackup;window.importBackup=importBackup;window.syncToFirebase=syncToFirebase;window.loadFromFirebase=loadFromFirebase;window.app=app;window.save=save;window.openPricingModal=openPricingModal;window.closePricingModal=closePricingModal;window.calculatePricing=calculatePricing;window.applyPricingToProduct=applyPricingToProduct;
 nav();renderAll();
 </script>
 </body>
