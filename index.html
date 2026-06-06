@@ -9,51 +9,52 @@ html = r'''<!DOCTYPE html>
 <title>FinMEI Pro | Consultoria Financeira</title>
 <style>
 :root{
-  --bg:#f4f7fb;--surface:#fff;--text:#172033;--muted:#667085;--line:#e5e7eb;
-  --primary:#7c2d12;--primary2:#9a3412;--green:#15803d;--red:#b42318;--blue:#175cd3;
-  --shadow:0 18px 45px rgba(15,23,42,.10);--radius:18px
+  --bg:#d8d8d8;--surface:#ece8e7;--text:#272220;--muted:#6d5f5a;--line:#2f2826;
+  --primary:#8e2e20;--primary2:#7a2418;--green:#0e5d12;--red:#5a170f;--blue:#0d2f8b;
+  --shadow:none;--radius:0
 }
-*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+*{box-sizing:border-box}body{margin:0;font-family:Calibri,Arial,sans-serif;background:var(--bg);color:var(--text)}
 button,input,select,textarea{font:inherit}button{cursor:pointer}
-.app{display:grid;grid-template-columns:290px 1fr;min-height:100vh}
-.sidebar{background:linear-gradient(180deg,#431407,#7c2d12);color:#fff;padding:22px 16px;position:sticky;top:0;height:100vh;overflow:auto}
+.app{display:grid;grid-template-columns:210px 1fr;min-height:100vh}
+.sidebar{background:#e7d3d1;color:var(--primary2);padding:8px 10px;position:sticky;top:0;height:100vh;overflow:auto;border-right:1px solid #b78e89}
 body.home-mode .client-mini,body.home-mode .nav-title,body.home-mode .nav{display:none}
-.logo{display:flex;gap:12px;align-items:center;padding:10px;margin-bottom:20px}
-.logo-mark{width:46px;height:46px;border-radius:15px;background:#fed7aa;display:grid;place-items:center;color:#431407;font-weight:900;font-size:20px}
-.logo h1{margin:0;font-size:21px}.logo p{margin:2px 0 0;color:#fed7aa;font-size:12px}
-.client-mini{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:14px;margin:10px 6px 18px}
-.client-mini small{color:#fed7aa;display:block}.client-mini b{font-size:15px}
-.nav-title{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#fed7aa;margin:20px 12px 8px}
-.nav button{width:100%;border:0;background:transparent;color:#fff;padding:12px 13px;margin:3px 0;border-radius:13px;display:flex;gap:10px;text-align:left;font-weight:700}
-.nav button:hover,.nav button.active{background:rgba(255,255,255,.16)}
-.nav .ico{width:6px;height:25px;border-radius:8px;background:rgba(255,255,255,.35)}
-.main{padding:24px;overflow:auto}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
-.title h2{margin:0;font-size:30px}.title p{margin:5px 0 0;color:var(--muted)}.actions{display:flex;gap:10px;flex-wrap:wrap}
-.btn{border:0;border-radius:12px;padding:10px 14px;font-weight:800;color:white;background:var(--primary2);box-shadow:0 8px 18px rgba(124,45,18,.18)}
-.btn.secondary{background:#475467}.btn.light{background:white;color:var(--primary);border:1px solid #f0cbb8;box-shadow:none}.btn.green{background:var(--green)}.btn.blue{background:var(--blue)}.btn.red{background:var(--red)}.btn.small{padding:7px 9px;border-radius:10px;font-size:12px}
-.page{display:none}.page.active{display:block}.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:18px}
-.panel-header{display:flex;justify-content:space-between;gap:12px;margin-bottom:16px}.panel-header h3{margin:0;font-size:19px}.panel-header p{margin:4px 0 0;color:var(--muted);font-size:13px}
-.cards{display:grid;grid-template-columns:repeat(4,minmax(180px,1fr));gap:14px}.kpi{background:linear-gradient(180deg,#fff,#fff7ed);border:1px solid #fed7aa;border-radius:18px;padding:16px}
-.kpi .label{font-size:13px;color:#7c2d12;font-weight:800}.kpi .value{font-size:25px;font-weight:900;margin-top:7px}.kpi .hint{font-size:12px;color:var(--muted);margin-top:4px}
-.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.client-card{background:white;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:18px;position:relative;overflow:hidden}
-.client-card:before{content:"";position:absolute;inset:0 0 auto 0;height:7px;background:linear-gradient(90deg,var(--primary),#f97316)}
-.client-card h3{margin:10px 0 6px;font-size:22px}.client-card p{margin:4px 0;color:var(--muted);font-size:13px}
-.badge{display:inline-flex;border-radius:999px;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;padding:5px 9px;font-size:12px;font-weight:800;margin:8px 6px 0 0}
-.badge.blue{background:#eff6ff;color:#175cd3;border-color:#bfdbfe}.badge.green{background:#ecfdf3;color:#067647;border-color:#abefc6}
-.card-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}.card-stat{background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:10px}
-.card-stat small{display:block;color:var(--muted);font-size:11px}.card-stat b{display:block;margin-top:4px}.card-actions{display:flex;gap:8px;flex-wrap:wrap}
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:14px}.field label{font-size:12px;font-weight:800;color:#344054;display:block;margin-bottom:6px}
-.field input,.field select,.field textarea{width:100%;border:1px solid #d0d5dd;border-radius:12px;padding:10px 12px;background:white;outline:none}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:#fb923c;box-shadow:0 0 0 4px #ffedd5}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}table{width:100%;border-collapse:separate;border-spacing:0;background:white;min-width:950px}
-th{position:sticky;top:0;background:#fff7ed;color:#7c2d12;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding:12px;border-bottom:1px solid #fed7aa}
-td{padding:8px 10px;border-bottom:1px solid var(--line)}td input,td select{width:100%;min-width:110px;border:1px solid transparent;background:transparent;border-radius:9px;padding:7px 8px;outline:none}
-td input:focus,td select:focus{border-color:#fb923c;background:white;box-shadow:0 0 0 3px #ffedd5}.empty{padding:28px;text-align:center;color:var(--muted);background:#fafafa;border-radius:16px}
-.dre-row{display:flex;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--line)}.dre-row.total{background:#fff7ed;border-radius:14px;border:1px solid #fed7aa;margin-top:10px;font-size:18px}.good strong{color:var(--green)}.bad strong{color:var(--red)}
-.notice{background:#fffbeb;border:1px solid #fedf89;border-radius:16px;padding:14px;color:#713b12}.notice.ok{background:#ecfdf3;border-color:#abefc6;color:#067647}.notice.err{background:#fef3f2;border-color:#fecdca;color:#b42318}
-.modal{position:fixed;inset:0;background:rgba(15,23,42,.58);display:none;align-items:center;justify-content:center;z-index:100;padding:18px}.modal.open{display:flex}
-.modal-card{background:white;border-radius:24px;width:min(720px,100%);box-shadow:0 30px 70px rgba(0,0,0,.28);padding:22px}.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.logo{display:flex;gap:8px;align-items:center;padding:6px;margin-bottom:8px;border:1px solid #b78e89;background:#f4eceb}
+.logo-mark{width:40px;height:40px;border-radius:0;background:#f4eceb;border:1px solid #b78e89;display:grid;place-items:center;color:var(--primary2);font-weight:900;font-size:20px}
+.logo h1{margin:0;font-size:20px;color:var(--primary2)}.logo p{margin:2px 0 0;color:#8c5d56;font-size:11px;text-transform:uppercase}
+.client-mini{background:#f4eceb;border:1px solid #b78e89;border-radius:0;padding:10px;margin:8px 0 12px}
+.client-mini small{color:#8c5d56;display:block}.client-mini b{font-size:14px}
+.nav-title{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#8c5d56;margin:10px 6px}
+.nav button{width:100%;border:1px solid #b04c3e;background:#f2e7e5;color:#9a2f1f;padding:9px 12px;margin:4px 0;border-radius:999px;display:flex;align-items:center;gap:8px;text-align:center;font-weight:800;justify-content:center;text-transform:uppercase;font-size:13px}
+.nav button:hover,.nav button.active{background:#f7efee;border-color:#7a2418}
+.nav .ico{width:0;height:0}
+.main{padding:10px 18px 18px;overflow:auto}.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.title h2{margin:0;font-size:28px;color:#3f100d}.title p{margin:3px 0 0;color:var(--muted)}.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid #6f1d14;border-radius:4px;padding:7px 11px;font-weight:800;color:#fff;background:var(--primary2);box-shadow:none}
+.btn.secondary{background:#5f5855;border-color:#514b48}.btn.light{background:#f5eeee;color:var(--primary2);border:1px solid #a67d76}.btn.green{background:var(--green);border-color:#0a420d}.btn.blue{background:var(--blue);border-color:#0a2264}.btn.red{background:var(--red);border-color:#3e1009}.btn.small{padding:5px 7px;border-radius:3px;font-size:11px}
+.page{display:none}.page.active{display:block}.panel{background:var(--surface);border:1px solid #a88f8b;border-radius:0;box-shadow:none;padding:10px;margin-bottom:10px}
+.panel-header{display:flex;justify-content:space-between;gap:12px;margin-bottom:10px}.panel-header h3{margin:0;font-size:17px}.panel-header p{margin:2px 0 0;color:var(--muted);font-size:12px}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:8px}.kpi{background:#f5eded;border:1px solid #8e2e20;border-radius:0;padding:12px}
+.kpi .label{font-size:12px;color:#6f1d14;font-weight:800;text-transform:uppercase}.kpi .value{font-size:22px;font-weight:900;margin-top:4px}.kpi .hint{font-size:11px;color:var(--muted);margin-top:3px}
+.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.client-card{background:#f5eded;border:1px solid #a88f8b;border-radius:0;box-shadow:none;padding:12px;position:relative;overflow:hidden}
+.client-card:before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:#6f1d14}
+.client-card h3{margin:7px 0 5px;font-size:20px}.client-card p{margin:3px 0;color:var(--muted);font-size:12px}
+.badge{display:inline-flex;border-radius:999px;background:#f5eded;color:#6f1d14;border:1px solid #a67d76;padding:4px 8px;font-size:11px;font-weight:800;margin:6px 5px 0 0}
+.badge.blue{background:#e7ebfb;color:#0d2f8b;border-color:#8ca0df}.badge.green{background:#e8f6ea;color:#0e5d12;border-color:#7ec184}
+.card-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.card-stat{background:#f8f4f3;border:1px solid #c6b2ae;border-radius:0;padding:8px}
+.card-stat small{display:block;color:var(--muted);font-size:10px}.card-stat b{display:block;margin-top:3px}.card-actions{display:flex;gap:6px;flex-wrap:wrap}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:10px}.field label{font-size:11px;font-weight:800;color:#4a2b27;display:block;margin-bottom:4px;text-transform:uppercase}
+.field input,.field select,.field textarea{width:100%;border:1px solid #8f8582;border-radius:0;padding:7px 9px;background:#fff;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#8e2e20;box-shadow:0 0 0 2px #e7d3d1}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:0;background:#fff}table{width:100%;border-collapse:collapse;background:#fff;min-width:950px}
+th{position:sticky;top:0;background:#ecd0cb;color:#000;text-align:center;font-size:12px;text-transform:uppercase;letter-spacing:0;padding:8px;border:1px solid var(--line);font-weight:800}
+td{padding:3px 6px;border:1px solid var(--line);font-size:13px}td input,td select{width:100%;min-width:98px;border:1px solid transparent;background:transparent;border-radius:0;padding:2px 4px;outline:none;color:inherit}
+td input:focus,td select:focus{border-color:#8e2e20;background:#fff;box-shadow:0 0 0 1px #e7d3d1}.empty{padding:24px;text-align:center;color:var(--muted);background:#faf7f7;border-radius:0}
+tbody tr.row-receita td{background:#0a5a08;color:#fff;font-weight:700}tbody tr.row-invest td{background:#0d2f8b;color:#fff;font-weight:700}tbody tr.row-despesa td{background:#5a170f;color:#fff;font-weight:700}tbody tr.row-despesa-vendas td{background:#7b271b;color:#fff;font-weight:700}tbody tr.row-impostos td{background:#652218;color:#fff;font-weight:700}
+.dre-row{display:flex;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-bottom:0;background:#fff}.dre-row:last-child{border-bottom:1px solid var(--line)}.dre-row.total{background:#ece0de;border-radius:0;margin-top:6px;font-size:17px}.good strong{color:var(--green)}.bad strong{color:var(--red)}
+.notice{background:#f8efcc;border:1px solid #c9b77f;border-radius:0;padding:10px;color:#5f4823}.notice.ok{background:#e6f4e8;border-color:#8fbe95;color:#0f5a16}.notice.err{background:#f9e6e3;border-color:#d49b92;color:#8a1f13}
+.modal{position:fixed;inset:0;background:rgba(22,16,15,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:18px}.modal.open{display:flex}
+.modal-card{background:#f8f2f1;border-radius:0;border:1px solid #96706a;width:min(720px,100%);box-shadow:none;padding:16px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
 @media(max-width:1000px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.cards{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}}
 @media(max-width:620px){.cards{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}}
 </style>
@@ -140,8 +141,9 @@ function cellInput(table,i,key,v){const selects={mes:meses,tipo:['Receita','Desp
 function updateRow(table,i,key,value){current()[table][i][key]=value;save();renderAll();}
 function addRow(table){let row={...defaults[table]};if(table==='caixa')row.conta=current().nome;current()[table].push(row);save();renderAll();}
 function delRow(table,i){if(confirm('Excluir esta linha?')){current()[table].splice(i,1);save();renderAll();}}
+function rowClass(table,row){if(table==='caixa'){if(row.tipo==='Receita')return'row-receita';if(row.tipo==='Despesa'&&row.categoria==='Estoque / Mercadoria')return'row-despesa-vendas';if(row.tipo==='Despesa'&&['Taxas','Impostos'].includes(row.categoria))return'row-impostos';if(row.tipo==='Despesa')return'row-despesa';}if(table==='estoque'&&row.tipo==='Entrada')return'row-invest';return'';}
 
-function renderTable(table,tbodyId){let body=document.getElementById(tbodyId);if(!body)return;let rows=current()[table]||[];body.innerHTML=rows.length?rows.map((r,i)=>`<tr>${schemas[table].map(k=>`<td>${cellInput(table,i,k,r[k])}</td>`).join('')}<td><button class="btn red small" onclick="delRow('${table}',${i})">Excluir</button></td></tr>`).join(''):`<tr><td colspan="20"><div class="empty">Nenhum registro cadastrado.</div></td></tr>`;}
+function renderTable(table,tbodyId){let body=document.getElementById(tbodyId);if(!body)return;let rows=current()[table]||[];body.innerHTML=rows.length?rows.map((r,i)=>`<tr class="${rowClass(table,r)}">${schemas[table].map(k=>`<td>${cellInput(table,i,k,r[k])}</td>`).join('')}<td><button class="btn red small" onclick="delRow('${table}',${i})">Excluir</button></td></tr>`).join(''):`<tr><td colspan="20"><div class="empty">Nenhum registro cadastrado.</div></td></tr>`;}
 function renderHome(){document.getElementById('clientGrid').innerHTML=app.clients.map(c=>`<div class="client-card"><h3>${c.nome}</h3><p>${c.segmento}</p><span class="badge">${c.tipo}</span><span class="badge blue">${labelOp(c.operacao)}</span><span class="badge green">${c.status||'Ativo'}</span><div class="card-stats"><div class="card-stat"><small>Receita</small><b>${money(receitas(c))}</b></div><div class="card-stat"><small>Saldo</small><b>${money(saldo(c))}</b></div></div><div class="card-actions"><button class="btn small green" onclick="selectClient('${c.id}')">Abrir</button><button class="btn small secondary" onclick="app.current='${c.id}';save();renderAll();go('cliente')">Editar</button><button class="btn small red" onclick="deleteClient('${c.id}')">Excluir</button></div></div>`).join('');}
 function renderClientForm(){let c=current();document.getElementById('currentClientLabel').innerText=document.body.classList.contains('home-mode')?'Página inicial':c.nome;document.getElementById('cliNome').value=c.nome||'';document.getElementById('cliSegmento').value=c.segmento||'';document.getElementById('cliTipo').value=c.tipo||'MEI';document.getElementById('cliOperacao').value=c.operacao||'produto';document.getElementById('cliCnpj').value=c.cnpj||'';document.getElementById('cliResponsavel').value=c.responsavel||'';document.getElementById('cliTelefone').value=c.telefone||'';document.getElementById('cliStatus').value=c.status||'Ativo';document.getElementById('cliObs').value=c.obs||'';}
 function renderDashboard(){let c=current();document.getElementById('dashSub').innerText=`${c.nome} · ${labelOp(c.operacao)}`;document.getElementById('kpiReceita').innerText=money(receitas());document.getElementById('kpiDespesa').innerText=money(despesas());document.getElementById('kpiSaldo').innerText=money(saldo());document.getElementById('kpiItens').innerText=(c.produtos.length+c.servicos.length);document.getElementById('diagnostico').innerHTML=`<b>${c.nome}</b><br>Segmento: ${c.segmento||'não informado'}<br>Operação: ${labelOp(c.operacao)}<br><br>Prioridade sugerida: ${hasProd()?'precificação por produto, estoque e margem real.':'precificação por serviço, custo por atendimento e agenda de faturamento.'}`;}
