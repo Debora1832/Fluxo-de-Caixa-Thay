@@ -194,7 +194,22 @@ function ensureCadastros(c){
 function seed(){return {current:'ncstore',clients:[{id:'ncstore',nome:'NC Store',segmento:'Roupas femininas online',tipo:'MEI / Loja online',operacao:'produto',cnpj:'',responsavel:'Nicolly',telefone:'',status:'Ativo',obs:'Loja iniciando operação. Prioridade: precificação, caixa e estoque.',cadastros:defaultCadastros('NC Store'),produtos:[{codigo:'NC001',produto:'Estoque inicial',categoria:'Roupas femininas',tamanho:'Variado',cor:'Variado',fornecedor:'',custo:76.37,preco:120,estoqueInicial:29}],servicos:[],estoque:[{data:'2026-06-01',codigo:'NC001',produto:'Estoque inicial',tipo:'Entrada',quantidade:29,custo:76.37,preco:120,status:'Disponível'}],caixa:[{data:'2026-06-01',mes:'JUNHO',ano:2026,tipo:'Receita',categoria:'Venda',descricao:'Lucro inicial informado',valor:250,pagamento:'Pix',conta:'NC Store'},{data:'2026-06-01',mes:'JUNHO',ano:2026,tipo:'Despesa',categoria:'Estoque / Mercadoria',descricao:'Primeira coleção + frete',valor:1081,pagamento:'Pix',conta:'NC Store'},{data:'2026-06-01',mes:'JUNHO',ano:2026,tipo:'Despesa',categoria:'Estoque / Mercadoria',descricao:'Segunda coleção',valor:1133.84,pagamento:'Pix',conta:'NC Store'}],metas:[{mes:'JUNHO',ano:2026,faturamento:1500,lucro:369,vendas:15,acao:'Implantar controle financeiro e precificação',status:'Em andamento'}]}]};}
 let app=JSON.parse(localStorage.getItem('finmei_pro_fire_v2')||'null')||seed();migrate();
 
-function migrate(){app.clients.forEach(c=>{['produtos','servicos','estoque','caixa','metas'].forEach(k=>{if(!c[k])c[k]=[]});if(!c.operacao)c.operacao='produto';if(!c.status)c.status='Ativo';c.caixa.forEach(row=>{if(!('produtoCodigo' in row))row.produtoCodigo='';if(!('quantidade' in row))row.quantidade=1;});ensureCadastros(c);syncAutoEstoque(c);});}
+function migrateCaixaRows(c){
+ c.caixa.forEach(row=>{
+  if(!('produtoCodigo' in row))row.produtoCodigo='';
+  if(!('quantidade' in row))row.quantidade=1;
+ });
+}
+function migrate(){
+ app.clients.forEach(c=>{
+  ['produtos','servicos','estoque','caixa','metas'].forEach(k=>{if(!c[k])c[k]=[];});
+  if(!c.operacao)c.operacao='produto';
+  if(!c.status)c.status='Ativo';
+  migrateCaixaRows(c);
+  ensureCadastros(c);
+  syncAutoEstoque(c);
+ });
+}
 function save(){localStorage.setItem('finmei_pro_fire_v2',JSON.stringify(app));}
 function current(){return app.clients.find(c=>c.id===app.current)||app.clients[0];}
 function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
@@ -205,7 +220,7 @@ function codePrefix(c=current()){
  if(existing)return existing[1];
  const parts=normalizeText(c.nome||'PR').toUpperCase().replace(/[^A-Z0-9 ]/g,' ').split(/\s+/).filter(Boolean);
  const prefix=(parts.slice(0,3).map(p=>p[0]).join('')||'PR').slice(0,3);
- return prefix.padEnd(2,'P');
+ return prefix.padEnd(3,'P');
 }
 function nextProductCode(c=current()){
  const prefix=codePrefix(c);
@@ -224,7 +239,7 @@ function syncAutoEstoque(c=current()){
    codigo:product?.codigo||row.produtoCodigo||'',
    produto:product?.produto||'Produto vinculado',
    tipo:'Saída',
-   quantidade:Math.max(1,num(row.quantidade)||1),
+   quantidade:num(row.quantidade)||1,
    custo:num(product?.custo),
    preco:num(product?.preco||row.valor),
    status:'Vendido',
@@ -330,8 +345,23 @@ function renderValue(table,key,row){
  return row[key]??'';
 }
 function renderTable(table,tbodyId){
- let body=document.getElementById(tbodyId);if(!body)return;let rows=current()[table]||[];
- body.innerHTML=rows.length?rows.map((r,i)=>{const locked=table==='estoque'&&r.origem==='caixa';const cells=schemas[table].map(k=>`<td>${locked?renderValue(table,k,r):cellInput(table,i,k,r[k])}</td>`).join('');const action=locked?'<span class="table-tag">Automático</span>':`<button class="btn red small" onclick="delRow('${table}',${i})">Excluir</button>`;return `<tr class="${rowClass(table,r)}">${cells}<td>${action}</td></tr>`;}).join(''):`<tr><td colspan="20"><div class="empty">Nenhum registro cadastrado.</div></td></tr>`;
+ let body=document.getElementById(tbodyId);
+ if(!body)return;
+ let rows=current()[table]||[];
+ if(!rows.length){
+ body.innerHTML=`<tr><td colspan="20"><div class="empty">Nenhum registro cadastrado.</div></td></tr>`;
+ return;
+ }
+ body.innerHTML=rows.map((r,i)=>{
+ const locked=table==='estoque'&&r.origem==='caixa';
+ const cells=schemas[table]
+  .map(k=>`<td>${locked?renderValue(table,k,r):cellInput(table,i,k,r[k])}</td>`)
+  .join('');
+ const action=locked
+  ? '<span class="table-tag">Automático</span>'
+  : `<button class="btn red small" onclick="delRow('${table}',${i})">Excluir</button>`;
+ return `<tr class="${rowClass(table,r)}">${cells}<td>${action}</td></tr>`;
+ }).join('');
 }
 function renderHome(){document.getElementById('clientGrid').innerHTML=app.clients.map(c=>`<div class="client-card"><h3>${c.nome}</h3><p>${c.segmento}</p><span class="badge">${c.tipo}</span><span class="badge blue">${labelOp(c.operacao)}</span><span class="badge green">${c.status||'Ativo'}</span><div class="card-stats"><div class="card-stat"><small>Receita</small><b>${money(receitas(c))}</b></div><div class="card-stat"><small>Saldo</small><b>${money(saldo(c))}</b></div></div><div class="card-actions"><button class="btn small green" onclick="selectClient('${c.id}')">Abrir</button><button class="btn small secondary" onclick="app.current='${c.id}';save();renderAll();go('cliente')">Editar</button><button class="btn small red" onclick="deleteClient('${c.id}')">Excluir</button></div></div>`).join('');}
 function renderClientForm(){let c=current();document.getElementById('currentClientLabel').innerText=document.body.classList.contains('home-mode')?'Página inicial':c.nome;document.getElementById('cliNome').value=c.nome||'';document.getElementById('cliSegmento').value=c.segmento||'';document.getElementById('cliTipo').value=c.tipo||'MEI';document.getElementById('cliOperacao').value=c.operacao||'produto';document.getElementById('cliCnpj').value=c.cnpj||'';document.getElementById('cliResponsavel').value=c.responsavel||'';document.getElementById('cliTelefone').value=c.telefone||'';document.getElementById('cliStatus').value=c.status||'Ativo';document.getElementById('cliObs').value=c.obs||'';}
