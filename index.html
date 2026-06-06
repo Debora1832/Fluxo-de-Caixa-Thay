@@ -1,449 +1,241 @@
-<!doctype html>
+from pathlib import Path
+import zipfile, json
+
+html = r'''<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<title>Fluxo de Caixa</title>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+<title>FinMEI Pro | Consultoria Financeira</title>
 <style>
-.menu{display:block;width:100%;padding:8px;border-radius:6px;text-align:left}
-.menu:hover{background:#eef2ff}
-.hidden{display:none}
+:root{
+  --bg:#f4f7fb;--surface:#fff;--text:#172033;--muted:#667085;--line:#e5e7eb;
+  --primary:#7c2d12;--primary2:#9a3412;--green:#15803d;--red:#b42318;--blue:#175cd3;
+  --shadow:0 18px 45px rgba(15,23,42,.10);--radius:18px
+}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+.app{display:grid;grid-template-columns:290px 1fr;min-height:100vh}
+.sidebar{background:linear-gradient(180deg,#431407,#7c2d12);color:#fff;padding:22px 16px;position:sticky;top:0;height:100vh;overflow:auto}
+body.home-mode .client-mini,body.home-mode .nav-title,body.home-mode .nav{display:none}
+.logo{display:flex;gap:12px;align-items:center;padding:10px;margin-bottom:20px}
+.logo-mark{width:46px;height:46px;border-radius:15px;background:#fed7aa;display:grid;place-items:center;color:#431407;font-weight:900;font-size:20px}
+.logo h1{margin:0;font-size:21px}.logo p{margin:2px 0 0;color:#fed7aa;font-size:12px}
+.client-mini{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:14px;margin:10px 6px 18px}
+.client-mini small{color:#fed7aa;display:block}.client-mini b{font-size:15px}
+.nav-title{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#fed7aa;margin:20px 12px 8px}
+.nav button{width:100%;border:0;background:transparent;color:#fff;padding:12px 13px;margin:3px 0;border-radius:13px;display:flex;gap:10px;text-align:left;font-weight:700}
+.nav button:hover,.nav button.active{background:rgba(255,255,255,.16)}
+.nav .ico{width:6px;height:25px;border-radius:8px;background:rgba(255,255,255,.35)}
+.main{padding:24px;overflow:auto}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+.title h2{margin:0;font-size:30px}.title p{margin:5px 0 0;color:var(--muted)}.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:0;border-radius:12px;padding:10px 14px;font-weight:800;color:white;background:var(--primary2);box-shadow:0 8px 18px rgba(124,45,18,.18)}
+.btn.secondary{background:#475467}.btn.light{background:white;color:var(--primary);border:1px solid #f0cbb8;box-shadow:none}.btn.green{background:var(--green)}.btn.blue{background:var(--blue)}.btn.red{background:var(--red)}.btn.small{padding:7px 9px;border-radius:10px;font-size:12px}
+.page{display:none}.page.active{display:block}.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:18px}
+.panel-header{display:flex;justify-content:space-between;gap:12px;margin-bottom:16px}.panel-header h3{margin:0;font-size:19px}.panel-header p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(180px,1fr));gap:14px}.kpi{background:linear-gradient(180deg,#fff,#fff7ed);border:1px solid #fed7aa;border-radius:18px;padding:16px}
+.kpi .label{font-size:13px;color:#7c2d12;font-weight:800}.kpi .value{font-size:25px;font-weight:900;margin-top:7px}.kpi .hint{font-size:12px;color:var(--muted);margin-top:4px}
+.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.client-card{background:white;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:18px;position:relative;overflow:hidden}
+.client-card:before{content:"";position:absolute;inset:0 0 auto 0;height:7px;background:linear-gradient(90deg,var(--primary),#f97316)}
+.client-card h3{margin:10px 0 6px;font-size:22px}.client-card p{margin:4px 0;color:var(--muted);font-size:13px}
+.badge{display:inline-flex;border-radius:999px;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;padding:5px 9px;font-size:12px;font-weight:800;margin:8px 6px 0 0}
+.badge.blue{background:#eff6ff;color:#175cd3;border-color:#bfdbfe}.badge.green{background:#ecfdf3;color:#067647;border-color:#abefc6}
+.card-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}.card-stat{background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:10px}
+.card-stat small{display:block;color:var(--muted);font-size:11px}.card-stat b{display:block;margin-top:4px}.card-actions{display:flex;gap:8px;flex-wrap:wrap}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:14px}.field label{font-size:12px;font-weight:800;color:#344054;display:block;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;border:1px solid #d0d5dd;border-radius:12px;padding:10px 12px;background:white;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#fb923c;box-shadow:0 0 0 4px #ffedd5}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}table{width:100%;border-collapse:separate;border-spacing:0;background:white;min-width:950px}
+th{position:sticky;top:0;background:#fff7ed;color:#7c2d12;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding:12px;border-bottom:1px solid #fed7aa}
+td{padding:8px 10px;border-bottom:1px solid var(--line)}td input,td select{width:100%;min-width:110px;border:1px solid transparent;background:transparent;border-radius:9px;padding:7px 8px;outline:none}
+td input:focus,td select:focus{border-color:#fb923c;background:white;box-shadow:0 0 0 3px #ffedd5}.empty{padding:28px;text-align:center;color:var(--muted);background:#fafafa;border-radius:16px}
+.dre-row{display:flex;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--line)}.dre-row.total{background:#fff7ed;border-radius:14px;border:1px solid #fed7aa;margin-top:10px;font-size:18px}.good strong{color:var(--green)}.bad strong{color:var(--red)}
+.notice{background:#fffbeb;border:1px solid #fedf89;border-radius:16px;padding:14px;color:#713b12}.notice.ok{background:#ecfdf3;border-color:#abefc6;color:#067647}.notice.err{background:#fef3f2;border-color:#fecdca;color:#b42318}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.58);display:none;align-items:center;justify-content:center;z-index:100;padding:18px}.modal.open{display:flex}
+.modal-card{background:white;border-radius:24px;width:min(720px,100%);box-shadow:0 30px 70px rgba(0,0,0,.28);padding:22px}.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+@media(max-width:1000px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.cards{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}}
+@media(max-width:620px){.cards{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}}
 </style>
 </head>
-
-<body class="bg-gray-100">
-
-<!-- LOGIN -->
-<div id="loginScreen" class="fixed inset-0 flex items-center justify-center bg-gray-100">
-  <div class="bg-white p-6 rounded-xl shadow w-80">
-    <h2 class="text-xl font-bold mb-4 text-center">Login</h2>
-    <input id="email" class="border p-2 w-full mb-2" placeholder="E-mail">
-    <input id="senha" type="password" class="border p-2 w-full mb-4" placeholder="Senha">
-    <button onclick="login()" class="bg-blue-600 text-white w-full p-2 rounded mb-2">Entrar</button>
-    <button onclick="register()" class="bg-gray-600 text-white w-full p-2 rounded">Cadastrar</button>
-  </div>
-</div>
-
-<!-- APP -->
-<div id="app" class="hidden min-h-screen flex">
-
-<!-- MENU -->
-<aside class="w-64 bg-white shadow p-4">
-  <h1 class="font-bold text-lg mb-4">Fluxo de Caixa</h1>
-  <button onclick="show('dashboard')" class="menu">Dashboard</button>
-  <button onclick="show('agenda')" class="menu">Agenda</button>
-  <button onclick="show('receitas')" class="menu">Receitas</button>
-  <button onclick="show('despesas')" class="menu">Despesas</button>
-  <button onclick="show('dre')" class="menu">DRE</button>
-  <button onclick="show('ir')" class="menu">IR / MEI</button>
-  <button onclick="logout()" class="menu text-red-600">Sair</button>
+<body class="home-mode">
+<div class="app">
+<aside class="sidebar">
+<div class="logo"><div class="logo-mark">F</div><div><h1>FinMEI Pro</h1><p>Consultoria financeira</p></div></div>
+<div class="client-mini"><small>Cliente selecionado</small><b id="currentClientLabel">Página inicial</b></div>
+<div class="nav-title">Menu</div><div class="nav" id="nav"></div>
 </aside>
-
-<!-- CONTEÚDO -->
-<main class="flex-1 p-6 space-y-6">
-
-<!-- DASHBOARD -->
-<section id="dashboard">
-<h2 class="text-xl font-bold mb-4">Dashboard</h2>
-
-<div class="grid md:grid-cols-4 gap-4 mb-6">
-  <div class="bg-white p-4 rounded shadow">Receita<br><b id="dRec">0</b></div>
-  <div class="bg-white p-4 rounded shadow">Despesa<br><b id="dDesp">0</b></div>
-  <div class="bg-white p-4 rounded shadow">Resultado<br><b id="dRes">0</b></div>
-  <div class="bg-white p-4 rounded shadow">Lançamentos<br><b id="dQtd">0</b></div>
-</div>
-
-<div class="grid md:grid-cols-2 gap-4">
-  <div class="bg-white p-4 rounded shadow"><canvas id="grafResumo"></canvas></div>
-  <div class="bg-white p-4 rounded shadow"><canvas id="grafCategoria"></canvas></div>
-</div>
+<main class="main">
+<section class="page active" id="home">
+<div class="topbar"><div class="title"><h2>Clientes da consultoria</h2><p>Gerencie lojas, MEIs, serviços e negócios mistos.</p></div>
+<div class="actions"><button class="btn green" onclick="openClientModal()">+ Novo cliente</button><button class="btn blue" onclick="syncToFirebase()">Salvar na nuvem</button><button class="btn light" onclick="loadFromFirebase()">Carregar nuvem</button><button class="btn light" onclick="exportBackup()">Exportar backup</button><button class="btn light" onclick="document.getElementById('importFile').click()">Importar backup</button><input id="importFile" type="file" accept=".json" hidden onchange="importBackup(event)"></div></div>
+<div class="panel"><div class="panel-header"><div><h3>Status da nuvem</h3><p>Sincronização com Firebase Firestore.</p></div></div><div id="firebaseStatus" class="notice">Verificando conexão...</div></div>
+<div class="client-grid" id="clientGrid"></div>
 </section>
 
-<!-- AGENDA -->
-<section id="agenda" class="hidden">
-<div class="flex items-center justify-between mb-4">
-<h2 class="text-xl font-bold">Agenda</h2>
-<div class="flex items-center gap-2">
-<button type="button" class="px-3 py-1 rounded bg-gray-200" onclick="mudarMesAgenda(-1)">◀</button>
-<input type="month" id="agendaMes" class="border p-1 rounded" onchange="definirMesAgenda(this.value)">
-<button type="button" class="px-3 py-1 rounded bg-gray-200" onclick="mudarMesAgenda(1)">▶</button>
-<span id="agendaMesLabel" class="text-sm text-gray-600"></span>
-</div>
-</div>
+<section class="page" id="dashboard"><div class="topbar"><div class="title"><h2>Dashboard</h2><p id="dashSub"></p></div></div><div class="cards"><div class="kpi"><div class="label">Receita</div><div class="value" id="kpiReceita">R$ 0,00</div><div class="hint">Total de entradas</div></div><div class="kpi"><div class="label">Despesas</div><div class="value" id="kpiDespesa">R$ 0,00</div><div class="hint">Total de saídas</div></div><div class="kpi"><div class="label">Saldo</div><div class="value" id="kpiSaldo">R$ 0,00</div><div class="hint">Receitas - despesas</div></div><div class="kpi"><div class="label">Itens cadastrados</div><div class="value" id="kpiItens">0</div><div class="hint">Produtos/serviços</div></div></div><div class="panel"><div class="panel-header"><div><h3>Diagnóstico financeiro</h3><p>Resumo para conduzir a consultoria.</p></div></div><div id="diagnostico" class="notice"></div></div></section>
 
-<form id="formAgenda" class="grid md:grid-cols-2 gap-3 mb-4">
-<input type="date" id="aData" aria-label="Data do atendimento" required>
-<input type="time" id="aHora" aria-label="Hora do atendimento">
-<input placeholder="Cliente" id="aCliente" aria-label="Nome da cliente" required>
-<input placeholder="Serviço" id="aServico" aria-label="Serviço a realizar" required>
-<input type="number" placeholder="Valor" id="aValor" aria-label="Valor do atendimento" min="0" step="0.01" required>
-<button type="submit" class="bg-blue-600 text-white rounded col-span-2" aria-label="Agendar atendimento">Agendar</button>
-</form>
+<section class="page" id="cliente"><div class="topbar"><div class="title"><h2>Dados do cliente</h2><p>Todos os campos são editáveis.</p></div></div><div class="panel"><div class="form-grid"><div class="field"><label>Nome da loja/MEI</label><input id="cliNome" onchange="setClient('nome',this.value)"></div><div class="field"><label>Segmento</label><input id="cliSegmento" onchange="setClient('segmento',this.value)"></div><div class="field"><label>Tipo jurídico/comercial</label><select id="cliTipo" onchange="setClient('tipo',this.value)"><option>MEI</option><option>Loja online</option><option>Prestador de serviço</option><option>Empresa informal</option><option>Outro</option></select></div><div class="field"><label>Operação</label><select id="cliOperacao" onchange="setClient('operacao',this.value);renderAll()"><option value="produto">Venda de produto</option><option value="servico">Prestação de serviço</option><option value="ambos">Produto e serviço</option></select></div><div class="field"><label>CNPJ</label><input id="cliCnpj" onchange="setClient('cnpj',this.value)"></div><div class="field"><label>Responsável</label><input id="cliResponsavel" onchange="setClient('responsavel',this.value)"></div><div class="field"><label>Telefone/WhatsApp</label><input id="cliTelefone" onchange="setClient('telefone',this.value)"></div><div class="field"><label>Status da consultoria</label><select id="cliStatus" onchange="setClient('status',this.value)"><option>Diagnóstico</option><option>Ativo</option><option>Pausado</option><option>Encerrado</option></select></div><div class="field" style="grid-column:1/-1"><label>Observações</label><textarea id="cliObs" rows="4" onchange="setClient('obs',this.value)"></textarea></div></div></div></section>
 
-<div class="mb-4">
-<div class="grid grid-cols-7 text-center text-sm font-semibold text-gray-600 mb-1">
-<div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
-</div>
-<div id="calAgenda" class="grid grid-cols-7 gap-2"></div>
-</div>
+<section class="page" id="produtos"><div class="topbar"><div class="title"><h2>Cadastro de produtos</h2><p>Produtos e mercadorias com estoque.</p></div><button class="btn green" onclick="addRow('produtos')">+ Produto</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Código</th><th>Produto</th><th>Categoria</th><th>Tamanho</th><th>Cor</th><th>Fornecedor</th><th>Custo</th><th>Preço venda</th><th>Estoque inicial</th><th>Ações</th></tr></thead><tbody id="tblProdutos"></tbody></table></div></div></section>
+<section class="page" id="servicos"><div class="topbar"><div class="title"><h2>Cadastro de serviços</h2><p>Serviços prestados sem controle de estoque.</p></div><button class="btn green" onclick="addRow('servicos')">+ Serviço</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Código</th><th>Serviço</th><th>Categoria</th><th>Tempo médio</th><th>Custo estimado</th><th>Preço cobrado</th><th>Observação</th><th>Ações</th></tr></thead><tbody id="tblServicos"></tbody></table></div></div></section>
+<section class="page" id="estoque"><div class="topbar"><div class="title"><h2>Movimentação de estoque</h2><p>Entradas, saídas, perdas, trocas e devoluções.</p></div><button class="btn green" onclick="addRow('estoque')">+ Movimentação</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Código</th><th>Produto</th><th>Tipo</th><th>Quantidade</th><th>Custo unit.</th><th>Preço venda</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tblEstoque"></tbody></table></div></div></section>
+<section class="page" id="caixa"><div class="topbar"><div class="title"><h2>Fluxo de caixa</h2><p>Entradas, saídas e contas.</p></div><button class="btn green" onclick="addRow('caixa')">+ Lançamento</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Mês</th><th>Ano</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th>Pagamento</th><th>Conta</th><th>Ações</th></tr></thead><tbody id="tblCaixa"></tbody></table></div></div></section>
+<section class="page" id="dre"><div class="topbar"><div class="title"><h2>DRE simplificada</h2><p>Resultado financeiro.</p></div></div><div class="panel"><div class="form-grid" style="margin-bottom:16px"><div class="field"><label>Mês</label><select id="dreMes" onchange="renderDRE()"></select></div><div class="field"><label>Ano</label><input id="dreAno" type="number" value="2026" onchange="renderDRE()"></div></div><div id="dreBox"></div></div></section>
+<section class="page" id="metas"><div class="topbar"><div class="title"><h2>Plano de metas</h2><p>Metas financeiras e ações.</p></div><button class="btn green" onclick="addRow('metas')">+ Meta</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Mês</th><th>Ano</th><th>Faturamento meta</th><th>Lucro meta</th><th>Qtd. vendas</th><th>Ação principal</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tblMetas"></tbody></table></div></div></section>
+<section class="page" id="relatorio"><div class="topbar"><div class="title"><h2>Relatório da consultoria</h2><p>Resumo para apresentar ao cliente.</p></div><button class="btn blue" onclick="window.print()">Imprimir/Salvar PDF</button></div><div class="panel" id="reportBox"></div></section>
+</main></div>
 
-<table class="w-full bg-white rounded">
-<thead><tr><th scope="col" class="text-left p-2">Data</th><th scope="col" class="text-left p-2">Hora</th><th scope="col" class="text-left p-2">Cliente</th><th scope="col" class="text-left p-2">Serviço</th><th scope="col" class="text-left p-2">Valor</th><th scope="col" class="text-left p-2">Status</th><th scope="col" class="text-left p-2">Ação</th></tr></thead>
-<tbody id="listaAgenda"></tbody>
-</table>
-</section>
+<div class="modal" id="clientModal"><div class="modal-card"><h3>Novo cliente</h3><div class="form-grid"><div class="field"><label>Nome da loja/MEI</label><input id="newNome" placeholder="Ex.: NC Store"></div><div class="field"><label>Segmento</label><input id="newSegmento" placeholder="Ex.: Roupas femininas"></div><div class="field"><label>Tipo</label><select id="newTipo"><option>MEI</option><option>Loja online</option><option>Prestador de serviço</option><option>Empresa informal</option><option>Outro</option></select></div><div class="field"><label>Operação</label><select id="newOperacao"><option value="produto">Venda de produto</option><option value="servico">Prestação de serviço</option><option value="ambos">Produto e serviço</option></select></div></div><div class="modal-actions"><button class="btn secondary" onclick="closeClientModal()">Cancelar</button><button class="btn green" onclick="createClient()">Criar</button></div></div></div>
 
-<!-- RECEITAS -->
-<section id="receitas" class="hidden">
-<h2 class="text-xl font-bold mb-4">Receitas</h2>
-
-<form id="formReceita" class="grid grid-cols-2 gap-3 mb-4">
-<input type="date" id="rData" required>
-<input placeholder="Descrição" id="rDesc" required>
-<input placeholder="Categoria" id="rCat" required>
-<input type="number" placeholder="Valor" id="rValor" required>
-<select id="rStatus">
-<option>Pago</option>
-<option>Não pago</option>
-</select>
-<button class="bg-blue-600 text-white rounded col-span-2">Adicionar</button>
-</form>
-
-<table class="w-full bg-white rounded">
-<thead><tr><th scope="col" class="text-left p-2">Data</th><th scope="col" class="text-left p-2">Descrição</th><th scope="col" class="text-left p-2">Valor</th><th scope="col" class="text-left p-2">Status</th></tr></thead>
-<tbody id="listaReceitas"></tbody>
-</table>
-</section>
-
-<!-- DESPESAS -->
-<section id="despesas" class="hidden">
-<h2 class="text-xl font-bold mb-4">Despesas</h2>
-
-<form id="formDespesa" class="grid grid-cols-2 gap-3 mb-4">
-<input type="date" id="dData" required>
-<input placeholder="Descrição" id="dDesc" required>
-<input placeholder="Categoria" id="dCat" required>
-
-<select id="dForma" onchange="ajustarForma()">
-<option value="PIX">PIX / Dinheiro</option>
-<option value="Boleto">Boleto</option>
-<option value="Cartao">Cartão</option>
-</select>
-
-<input id="dParcelas" type="number" placeholder="Parcelas" class="hidden">
-<input type="number" placeholder="Valor" id="dValor" required>
-
-<button class="bg-blue-600 text-white rounded col-span-2">Adicionar</button>
-</form>
-
-<table class="w-full bg-white rounded">
-<thead><tr><th scope="col" class="text-left p-2">Data</th><th scope="col" class="text-left p-2">Descrição</th><th scope="col" class="text-left p-2">Valor</th><th scope="col" class="text-left p-2">Forma</th></tr></thead>
-<tbody id="listaDespesas"></tbody>
-</table>
-</section>
-
-<!-- DRE -->
-<section id="dre" class="hidden">
-<h2 class="text-xl font-bold mb-4">DRE</h2>
-<input type="month" id="dreMes">
-<button onclick="calcDRE()" class="bg-blue-600 text-white p-2 rounded">Calcular</button>
-<div class="grid md:grid-cols-3 gap-4 mt-4">
-<div class="bg-white p-4 rounded">Receita<br><b id="dreR">0</b></div>
-<div class="bg-white p-4 rounded">Despesa<br><b id="dreD">0</b></div>
-<div class="bg-white p-4 rounded">Resultado<br><b id="dreRes">0</b></div>
-</div>
-</section>
-
-<!-- IR -->
-<section id="ir" class="hidden">
-<h2 class="text-xl font-bold mb-4">IR / MEI</h2>
-<input placeholder="Ano" id="irAno">
-<button onclick="calcIR()" class="bg-blue-600 text-white p-2 rounded">Calcular</button>
-<div class="grid md:grid-cols-3 gap-4 mt-4">
-<div class="bg-white p-4 rounded">Receita<br><b id="irR">0</b></div>
-<div class="bg-white p-4 rounded">Despesa<br><b id="irD">0</b></div>
-<div class="bg-white p-4 rounded">Base<br><b id="irB">0</b></div>
-</div>
-</section>
-
-</main>
-</div>
-
-<!-- FIREBASE + JS -->
 <script type="module">
-let app=null,auth=null,cloud=null,firestoreFns=null;
-let firebaseLoaded=false;
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
 
-async function carregarLibs(){
-  try{
-    const [{ initializeApp }, { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut }, { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc }] = await Promise.all([
-      import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"),
-      import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"),
-      import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js")
-    ]);
-    const firebaseConfig = { apiKey:"SUA_API_KEY", authDomain:"SEU_AUTH_DOMAIN", projectId:"SEU_PROJECT_ID", appId:"SEU_APP_ID" };
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    cloud = getFirestore(app);
-    firestoreFns={collection,addDoc,getDocs,query,where,doc,updateDoc};
-    firebaseLoaded=true;
-    if(auth) onAuthStateChanged(auth,async u=>{
-      if(u){
-        uid=u.uid;
-        loginScreen.classList.add('hidden');
-        appEl.classList.remove('hidden');
-        await carregar();
-      }else iniciarSemLogin();
-    });
-  }catch(err){
-    console.warn('Firebase indisponível, seguindo offline',err);
-    firebaseLoaded=false;
-    iniciarSemLogin();
+const firebaseConfig = {
+  apiKey: "AIzaSyBLm3BSb5A8ISFZky4GbYroRvuRQIUCfgQ",
+  authDomain: "finmei-pro.firebaseapp.com",
+  projectId: "finmei-pro",
+  storageBucket: "finmei-pro.firebasestorage.app",
+  messagingSenderId: "953875455821",
+  appId: "1:953875455821:web:1574f21baf5a83407ca104"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+const CLOUD_COLLECTION = "consultorias";
+const CLOUD_DOC = "dados_principais";
+
+const meses=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+const pageDefs=[['home','Clientes'],['dashboard','Dashboard'],['cliente','Dados do cliente'],['produtos','Produtos'],['servicos','Serviços'],['estoque','Estoque'],['caixa','Fluxo de caixa'],['dre','DRE'],['metas','Metas'],['relatorio','Relatório']];
+const schemas={produtos:['codigo','produto','categoria','tamanho','cor','fornecedor','custo','preco','estoqueInicial'],servicos:['codigo','servico','categoria','tempo','custo','preco','obs'],estoque:['data','codigo','produto','tipo','quantidade','custo','preco','status'],caixa:['data','mes','ano','tipo','categoria','descricao','valor','pagamento','conta'],metas:['mes','ano','faturamento','lucro','vendas','acao','status']};
+const defaults={produtos:{codigo:'',produto:'',categoria:'',tamanho:'',cor:'',fornecedor:'',custo:0,preco:0,estoqueInicial:0},servicos:{codigo:'',servico:'',categoria:'',tempo:'',custo:0,preco:0,obs:''},estoque:{data:new Date().toISOString().slice(0,10),codigo:'',produto:'',tipo:'Entrada',quantidade:1,custo:0,preco:0,status:'Disponível'},caixa:{data:new Date().toISOString().slice(0,10),mes:'JUNHO',ano:2026,tipo:'Receita',categoria:'Venda',descricao:'',valor:0,pagamento:'Pix',conta:''},metas:{mes:'JUNHO',ano:2026,faturamento:0,lucro:0,vendas:0,acao:'',status:'Planejado'}};
+
+function seed(){return {current:'ncstore',clients:[{id:'ncstore',nome:'NC Store',segmento:'Roupas femininas online',tipo:'MEI / Loja online',operacao:'produto',cnpj:'',responsavel:'Nicolly',telefone:'',status:'Ativo',obs:'Loja iniciando operação. Prioridade: precificação, caixa e estoque.',produtos:[{codigo:'NC001',produto:'Estoque inicial',categoria:'Roupas femininas',tamanho:'Variado',cor:'Variado',fornecedor:'',custo:76.37,preco:120,estoqueInicial:29}],servicos:[],estoque:[{data:'2026-06-01',codigo:'NC001',produto:'Estoque inicial',tipo:'Entrada',quantidade:29,custo:76.37,preco:120,status:'Disponível'}],caixa:[{data:'2026-06-01',mes:'JUNHO',ano:2026,tipo:'Receita',categoria:'Venda',descricao:'Lucro inicial informado',valor:250,pagamento:'Pix',conta:'NC Store'},{data:'2026-06-01',mes:'JUNHO',ano:2026,tipo:'Despesa',categoria:'Estoque / Mercadoria',descricao:'Primeira coleção + frete',valor:1081,pagamento:'Pix',conta:'NC Store'},{data:'2026-06-01',mes:'JUNHO',ano:2026,tipo:'Despesa',categoria:'Estoque / Mercadoria',descricao:'Segunda coleção',valor:1133.84,pagamento:'Pix',conta:'NC Store'}],metas:[{mes:'JUNHO',ano:2026,faturamento:1500,lucro:369,vendas:15,acao:'Implantar controle financeiro e precificação',status:'Em andamento'}]}]};}
+let app=JSON.parse(localStorage.getItem('finmei_pro_fire_v2')||'null')||seed();migrate();
+
+function migrate(){app.clients.forEach(c=>{['produtos','servicos','estoque','caixa','metas'].forEach(k=>{if(!c[k])c[k]=[]});if(!c.operacao)c.operacao='produto';if(!c.status)c.status='Ativo';});}
+function save(){localStorage.setItem('finmei_pro_fire_v2',JSON.stringify(app));}
+function current(){return app.clients.find(c=>c.id===app.current)||app.clients[0];}
+function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+function num(v){return Number(String(v??0).replace(',','.'))||0;}
+function labelOp(op){return op==='servico'?'Serviços':op==='ambos'?'Produtos + Serviços':'Produtos';}
+function hasProd(){return ['produto','ambos'].includes(current().operacao);}
+function hasServ(){return ['servico','ambos'].includes(current().operacao);}
+function receitas(c=current()){return c.caixa.filter(x=>x.tipo==='Receita').reduce((s,x)=>s+num(x.valor),0);}
+function despesas(c=current()){return c.caixa.filter(x=>x.tipo==='Despesa').reduce((s,x)=>s+num(x.valor),0);}
+function saldo(c=current()){return receitas(c)-despesas(c);}
+
+function openClientModal(){document.getElementById('clientModal').classList.add('open');}
+function closeClientModal(){document.getElementById('clientModal').classList.remove('open');}
+function createClient(){let nome=document.getElementById('newNome').value.trim();if(!nome){alert('Informe o nome do cliente.');return;}let c={id:'c'+Date.now(),nome,segmento:document.getElementById('newSegmento').value||'Não informado',tipo:document.getElementById('newTipo').value,operacao:document.getElementById('newOperacao').value,cnpj:'',responsavel:'',telefone:'',status:'Diagnóstico',obs:'',produtos:[],servicos:[],estoque:[],caixa:[],metas:[]};app.clients.push(c);app.current=c.id;save();closeClientModal();renderAll();go('dashboard');}
+function deleteClient(id){if(!confirm('Deseja excluir este cliente e todos os dados dele?'))return;app.clients=app.clients.filter(c=>c.id!==id);if(!app.clients.length)app=seed();app.current=app.clients[0].id;save();renderAll();go('home');}
+function selectClient(id){app.current=id;save();renderAll();go('dashboard');}
+
+function nav(){document.getElementById('nav').innerHTML=pageDefs.map(([id,label])=>`<button id="nav_${id}" onclick="go('${id}')"><span class="ico"></span>${label}</button>`).join('');}
+function go(id){if((id==='produtos'||id==='estoque')&&!hasProd())id='dashboard';if(id==='servicos'&&!hasServ())id='dashboard';document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');document.body.classList.toggle('home-mode',id==='home');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));let n=document.getElementById('nav_'+id);if(n)n.classList.add('active');renderAll();}
+function setClient(k,v){current()[k]=v;save();renderAll();}
+function opt(options,v){return options.map(o=>`<option ${o==v?'selected':''}>${o}</option>`).join('');}
+function cellInput(table,i,key,v){const selects={mes:meses,tipo:['Receita','Despesa','Entrada','Saída','Troca','Perda','Devolução'],status:['Disponível','Vendido','Em andamento','Planejado','Concluído','Pausado'],pagamento:['Pix','Cartão de crédito','Débito','Dinheiro','Link de pagamento','Boleto','Transferência'],categoria:['Venda','Estoque / Mercadoria','Embalagem','Frete','Marketing','Taxas','Plataforma','Pró-labore','Reserva','Impostos','Outros']};if(selects[key])return `<select onchange="updateRow('${table}',${i},'${key}',this.value)">${opt(selects[key],v)}</select>`;const type=['custo','preco','estoqueInicial','quantidade','valor','ano','faturamento','lucro','vendas'].includes(key)?'number':(key==='data'?'date':'text');return `<input type="${type}" value="${v??''}" onchange="updateRow('${table}',${i},'${key}',this.value)">`;}
+function updateRow(table,i,key,value){current()[table][i][key]=value;save();renderAll();}
+function addRow(table){let row={...defaults[table]};if(table==='caixa')row.conta=current().nome;current()[table].push(row);save();renderAll();}
+function delRow(table,i){if(confirm('Excluir esta linha?')){current()[table].splice(i,1);save();renderAll();}}
+
+function renderTable(table,tbodyId){let body=document.getElementById(tbodyId);if(!body)return;let rows=current()[table]||[];body.innerHTML=rows.length?rows.map((r,i)=>`<tr>${schemas[table].map(k=>`<td>${cellInput(table,i,k,r[k])}</td>`).join('')}<td><button class="btn red small" onclick="delRow('${table}',${i})">Excluir</button></td></tr>`).join(''):`<tr><td colspan="20"><div class="empty">Nenhum registro cadastrado.</div></td></tr>`;}
+function renderHome(){document.getElementById('clientGrid').innerHTML=app.clients.map(c=>`<div class="client-card"><h3>${c.nome}</h3><p>${c.segmento}</p><span class="badge">${c.tipo}</span><span class="badge blue">${labelOp(c.operacao)}</span><span class="badge green">${c.status||'Ativo'}</span><div class="card-stats"><div class="card-stat"><small>Receita</small><b>${money(receitas(c))}</b></div><div class="card-stat"><small>Saldo</small><b>${money(saldo(c))}</b></div></div><div class="card-actions"><button class="btn small green" onclick="selectClient('${c.id}')">Abrir</button><button class="btn small secondary" onclick="app.current='${c.id}';save();renderAll();go('cliente')">Editar</button><button class="btn small red" onclick="deleteClient('${c.id}')">Excluir</button></div></div>`).join('');}
+function renderClientForm(){let c=current();document.getElementById('currentClientLabel').innerText=document.body.classList.contains('home-mode')?'Página inicial':c.nome;document.getElementById('cliNome').value=c.nome||'';document.getElementById('cliSegmento').value=c.segmento||'';document.getElementById('cliTipo').value=c.tipo||'MEI';document.getElementById('cliOperacao').value=c.operacao||'produto';document.getElementById('cliCnpj').value=c.cnpj||'';document.getElementById('cliResponsavel').value=c.responsavel||'';document.getElementById('cliTelefone').value=c.telefone||'';document.getElementById('cliStatus').value=c.status||'Ativo';document.getElementById('cliObs').value=c.obs||'';}
+function renderDashboard(){let c=current();document.getElementById('dashSub').innerText=`${c.nome} · ${labelOp(c.operacao)}`;document.getElementById('kpiReceita').innerText=money(receitas());document.getElementById('kpiDespesa').innerText=money(despesas());document.getElementById('kpiSaldo').innerText=money(saldo());document.getElementById('kpiItens').innerText=(c.produtos.length+c.servicos.length);document.getElementById('diagnostico').innerHTML=`<b>${c.nome}</b><br>Segmento: ${c.segmento||'não informado'}<br>Operação: ${labelOp(c.operacao)}<br><br>Prioridade sugerida: ${hasProd()?'precificação por produto, estoque e margem real.':'precificação por serviço, custo por atendimento e agenda de faturamento.'}`;}
+function renderVisibility(){document.getElementById('nav_produtos').style.display=hasProd()?'flex':'none';document.getElementById('nav_estoque').style.display=hasProd()?'flex':'none';document.getElementById('nav_servicos').style.display=hasServ()?'flex':'none';}
+function renderDRE(){const mes=document.getElementById('dreMes').value||'JUNHO';const ano=Number(document.getElementById('dreAno').value||2026);const rows=current().caixa.filter(x=>x.mes===mes&&Number(x.ano)===ano);const rec=rows.filter(x=>x.tipo==='Receita').reduce((s,x)=>s+num(x.valor),0);const est=rows.filter(x=>x.tipo==='Despesa'&&x.categoria==='Estoque / Mercadoria').reduce((s,x)=>s+num(x.valor),0);const taxas=rows.filter(x=>x.tipo==='Despesa'&&['Taxas','Impostos'].includes(x.categoria)).reduce((s,x)=>s+num(x.valor),0);const oper=rows.filter(x=>x.tipo==='Despesa'&&!['Estoque / Mercadoria','Taxas','Impostos'].includes(x.categoria)).reduce((s,x)=>s+num(x.valor),0);const lucro=rec-est-taxas-oper;document.getElementById('dreBox').innerHTML=`<div class="dre-row"><b>Receita bruta</b><strong>${money(rec)}</strong></div><div class="dre-row"><b>(-) Custo mercadoria/serviço</b><strong>${money(est)}</strong></div><div class="dre-row"><b>(-) Taxas e impostos</b><strong>${money(taxas)}</strong></div><div class="dre-row"><b>(-) Despesas operacionais</b><strong>${money(oper)}</strong></div><div class="dre-row total ${lucro>=0?'good':'bad'}"><b>Lucro/Prejuízo líquido</b><strong>${money(lucro)}</strong></div>`;}
+function renderReport(){let c=current();document.getElementById('reportBox').innerHTML=`<h3>Relatório financeiro — ${c.nome}</h3><p><b>Segmento:</b> ${c.segmento}</p><p><b>Tipo de operação:</b> ${labelOp(c.operacao)}</p><p><b>Receita acumulada:</b> ${money(receitas())}</p><p><b>Despesas acumuladas:</b> ${money(despesas())}</p><p><b>Saldo acumulado:</b> ${money(saldo())}</p><hr><h3>Recomendações</h3><ol><li>Registrar todas as entradas e saídas semanalmente.</li><li>Separar dinheiro pessoal do dinheiro do negócio.</li><li>Calcular margem real antes de definir preço.</li>${hasProd()?'<li>Acompanhar giro de estoque e evitar compra sem análise de venda.</li>':'<li>Medir custo, tempo e lucro por serviço realizado.</li>'}<li>Definir meta mensal de faturamento, lucro e reinvestimento.</li></ol>`;}
+function renderDreSelect(){const sel=document.getElementById('dreMes');if(sel&&!sel.innerHTML)sel.innerHTML=meses.map(m=>`<option>${m}</option>`).join('');}
+function setCloudStatus(message,type=''){const el=document.getElementById('firebaseStatus');if(!el)return;el.className='notice '+type;el.innerHTML=message;}
+function renderFirebaseStatus(){setCloudStatus('Firebase configurado. Firestore: coleção consultorias, documento dados_principais.','ok');}
+
+async function syncToFirebase(){
+ try{
+  setCloudStatus('Salvando dados na nuvem...','');
+  await setDoc(doc(db,CLOUD_COLLECTION,CLOUD_DOC),{
+    app,
+    updatedAt: serverTimestamp(),
+    version: "finmei-pro-v2"
+  });
+  setCloudStatus('Dados salvos na nuvem com sucesso.','ok');
+  alert('Dados salvos na nuvem com sucesso.');
+ }catch(err){
+  console.error(err);
+  setCloudStatus('Erro ao salvar no Firebase. Verifique se o Firestore foi criado em modo teste e se as regras permitem escrita.','err');
+  alert('Erro ao salvar no Firebase. Verifique se o Firestore foi criado em modo teste.');
+ }
+}
+
+async function loadFromFirebase(){
+ try{
+  setCloudStatus('Carregando dados da nuvem...','');
+  const snap = await getDoc(doc(db,CLOUD_COLLECTION,CLOUD_DOC));
+  if(!snap.exists()){
+    setCloudStatus('Nenhum dado encontrado na nuvem ainda. Clique em Salvar na nuvem primeiro.','');
+    alert('Ainda não existem dados salvos na nuvem.');
+    return;
   }
-  try{
-    if(!window.Chart){
-      const chartMod=await import("https://cdn.jsdelivr.net/npm/chart.js");
-      window.Chart=chartMod.default||chartMod;
-    }
-  }catch(err){
-    console.warn('Chart indisponível, usando stub',err);
-    window.Chart=class{constructor(){this.destroy=()=>{};} destroy(){} static register(){}};
+  const data = snap.data();
+  if(data.app){
+    app = data.app;
+    migrate();
+    save();
+    renderAll();
+    setCloudStatus('Dados carregados da nuvem com sucesso.','ok');
+    alert('Dados carregados da nuvem com sucesso.');
   }
+ }catch(err){
+  console.error(err);
+  setCloudStatus('Erro ao carregar do Firebase. Verifique se o Firestore foi criado e se as regras permitem leitura.','err');
+  alert('Erro ao carregar do Firebase. Verifique o Firestore.');
+ }
 }
 
-const DEFAULT_UID='anon';
-let uid=DEFAULT_UID;
-let db={receitas:[],despesas:[],agenda:[]};
-const CAT_SERVICO='Serviço';
-const ESC_MAP={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;','/':'&#47;'};
-let graf1,graf2;
-let mesAgenda=new Date().toISOString().slice(0,7);
-const LS_PREFIX='fc_thay_';
-const appEl=document.getElementById('app');
-const loginEl=document.getElementById('loginScreen');
+function exportBackup(){const blob=new Blob([JSON.stringify(app,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup_finmei_pro.json';a.click();}
+function importBackup(ev){const file=ev.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{try{app=JSON.parse(e.target.result);migrate();save();renderAll();alert('Backup importado com sucesso.');}catch(err){alert('Arquivo inválido.');}};reader.readAsText(file);}
+function renderAll(){renderDreSelect();renderHome();renderClientForm();renderDashboard();renderVisibility();renderTable('produtos','tblProdutos');renderTable('servicos','tblServicos');renderTable('estoque','tblEstoque');renderTable('caixa','tblCaixa');renderTable('metas','tblMetas');renderDRE();renderReport();renderFirebaseStatus();}
 
-window.login=()=>auth?signInWithEmailAndPassword(auth,email.value,senha.value):iniciarSemLogin();
-window.register=()=>auth?createUserWithEmailAndPassword(auth,email.value,senha.value):iniciarSemLogin();
-window.logout=()=>auth?signOut(auth):iniciarSemLogin();
-
-window.show=id=>{
-document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
-document.getElementById(id).classList.remove('hidden');
-};
-
-async function iniciarSemLogin(){
-  uid=DEFAULT_UID;
-  loginEl.classList.add('hidden');
-  appEl.classList.remove('hidden');
-  show('agenda');
-  await carregar();
-}
-
-iniciarSemLogin();
-carregarLibs();
-
-async function carregar(){
-  db.receitas=await load('receitas');
-  db.despesas=await load('despesas');
-  db.agenda=await load('agenda');
-  render();
-}
-
-async function load(col){
-  try{
-    if(!cloud||!firestoreFns) return loadLocal(col);
-    const q=firestoreFns.query(firestoreFns.collection(cloud,col),firestoreFns.where('uid','==',uid));
-    const s=await firestoreFns.getDocs(q);
-    return s.docs.map(d=>({docId:d.id,...d.data()}));
-  }catch(err){
-    console.error(`Erro ao carregar ${col}`,err);
-    return loadLocal(col);
-  }
-}
-
-async function save(col,obj){
-  try{
-    if(!cloud||!firestoreFns){
-      saveLocal(col,obj);
-      return obj.id;
-    }
-    const ref=await firestoreFns.addDoc(firestoreFns.collection(cloud,col),{...obj,uid});
-    return ref.id;
-  }catch(err){
-    console.error(`Erro ao salvar em ${col}`,err);
-    saveLocal(col,obj);
-    return obj.id;
-  }
-}
-
-formReceita.onsubmit=async e=>{
-e.preventDefault();
-let r={id:crypto.randomUUID(),data:rData.value,desc:rDesc.value,cat:rCat.value,valor:+rValor.value,status:rStatus.value};
-db.receitas.push(r);r.docId=await save('receitas',r);render();e.target.reset();
-};
-
-formDespesa.onsubmit=async e=>{
-e.preventDefault();
-let p=dParcelas.value?+dParcelas.value:1;
-for(let i=1;i<=p;i++){
-let d={id:crypto.randomUUID(),data:dData.value,desc:dDesc.value,cat:dCat.value,valor:+dValor.value/p,forma:dForma.value};
-db.despesas.push(d);d.docId=await save('despesas',d);
-}
-render();e.target.reset();
-};
-
-formAgenda.onsubmit=async e=>{
-e.preventDefault();
-let a={id:crypto.randomUUID(),data:aData.value,hora:aHora.value,cliente:aCliente.value,servico:aServico.value,valor:+aValor.value,status:'Pendente'};
-db.agenda.push(a);a.docId=await save('agenda',a);render();e.target.reset();
-};
-
-window.ajustarForma=()=>dParcelas.classList.toggle('hidden',dForma.value==='PIX');
-
-const esc=str=>String(str??'').replace(/[&<>"'`/]/g,m=>ESC_MAP[m]);
-const gerarDescAtendimento=(cliente,servico)=>{
-let extra=`${cliente||''} ${servico||''}`.trim();
-return extra?`Atendimento ${extra}`:'Atendimento concluído';
-};
-
-function loadLocal(col){
-  try{
-    const raw=localStorage.getItem(LS_PREFIX+col);
-    if(!raw) return [];
-    return JSON.parse(raw);
-  }catch(e){
-    console.warn('Falha ao ler localStorage',e);
-    return [];
-  }
-}
-
-function saveLocal(col,obj){
-  const atual=loadLocal(col);
-  atual.push({...obj,uid});
-  try{
-    localStorage.setItem(LS_PREFIX+col,JSON.stringify(atual));
-  }catch(e){
-    console.warn('Falha ao salvar localStorage',e);
-  }
-}
-
-function render(){
-agendaMes.value=mesAgenda;
-agendaMesLabel.textContent=new Date(mesAgenda+'-01').toLocaleString('pt-BR',{month:'long',year:'numeric'});
-const agDoMes=db.agenda.filter(a=>a.data?.startsWith(mesAgenda));
-listaAgenda.innerHTML=agDoMes.map(a=>{
-let action=a.status==='Concluído'?'':`<button class="text-blue-600 underline btn-concluir" data-agenda-id="${esc(a.id)}">Concluir</button>`;
-return `<tr><td class="p-2">${esc(a.data)}</td><td class="p-2">${esc(a.hora||'')}</td><td class="p-2">${esc(a.cliente)}</td><td class="p-2">${esc(a.servico)}</td><td class="p-2">${esc(a.valor)}</td><td class="p-2">${esc(a.status)}</td><td class="p-2">${action}</td></tr>`;
-}).join('');
-renderCalendario(agDoMes);
-listaReceitas.innerHTML=db.receitas.map(r=>`<tr><td class="p-2">${esc(r.data)}</td><td class="p-2">${esc(r.desc)}</td><td class="p-2">${esc(r.valor)}</td><td class="p-2">${esc(r.status)}</td></tr>`).join('');
-listaDespesas.innerHTML=db.despesas.map(d=>`<tr><td class="p-2">${esc(d.data)}</td><td class="p-2">${esc(d.desc)}</td><td class="p-2">${esc(d.valor)}</td><td class="p-2">${esc(d.forma)}</td></tr>`).join('');
-dashboard();
-}
-
-const concluirAgendamento=async id=>{
-if (!id || typeof id !== 'string') return;
-let ag=db.agenda.find(a=>a.id===id);
-if(!ag||ag.status==='Concluído')return;
-let statusAnterior=ag.status;
-ag.status='Concluído';
-let novaReceita=null;
-try{
-if(ag.docId&&cloud&&firestoreFns) await firestoreFns.updateDoc(firestoreFns.doc(cloud,'agenda',ag.docId),{status:'Concluído'});
-let valorNumerico=parseFloat(ag.valor);
-if(Number.isNaN(valorNumerico)) throw new Error('Valor de atendimento inválido');
-novaReceita={id:crypto.randomUUID(),data:ag.data,desc:gerarDescAtendimento(ag.cliente,ag.servico),cat:CAT_SERVICO,valor:valorNumerico,status:'Pago'};
-db.receitas.push(novaReceita);novaReceita.docId=await save('receitas',novaReceita);render();
-}catch(err){
-console.error(`Erro ao concluir agendamento ${id}:`,err);
-ag.status=statusAnterior;
-if(novaReceita) db.receitas=db.receitas.filter(r=>r.id!==novaReceita.id);
-render();
-}
-};
-
-let agendaHandlerAttached=false;
-const attachAgendaHandler=()=>{
-if(agendaHandlerAttached) return;
-agendaHandlerAttached=true;
-const tabela=document.getElementById('listaAgenda');
-if(!tabela) return;
-tabela.addEventListener('click',e=>{
-const btn=e.target.closest('.btn-concluir');
-if(!btn) return;
-concluirAgendamento(btn.dataset.agendaId);
-});
-};
-
-attachAgendaHandler();
-
-window.mudarMesAgenda=delta=>{
-  const d=new Date(mesAgenda+'-01');
-  d.setMonth(d.getMonth()+delta);
-  mesAgenda=d.toISOString().slice(0,7);
-  render();
-};
-
-window.definirMesAgenda=val=>{
-  if(!val) return;
-  mesAgenda=val;
-  render();
-};
-
-function renderCalendario(agDoMes){
-  const cal=document.getElementById('calAgenda');
-  if(!cal) return;
-  const [ano,mes]=mesAgenda.split('-').map(Number);
-  const primeiro=new Date(ano,mes-1,1);
-  const inicio=primeiro.getDay(); // 0=Dom
-  const diasMes=new Date(ano,mes,0).getDate();
-  let cells=[];
-  for(let i=0;i<inicio;i++) cells.push('');
-  for(let d=1;d<=diasMes;d++) cells.push(String(d));
-  cal.innerHTML=cells.map(dia=>{
-    if(!dia) return `<div class="h-24 border rounded bg-gray-50"></div>`;
-    const diaStr=`${mesAgenda}-${String(dia).padStart(2,'0')}`;
-    const itens=agDoMes
-      .filter(a=>a.data===diaStr)
-      .sort((a,b)=>(a.hora||'').localeCompare(b.hora||''))
-      .map(a=>`<div class="text-[11px] truncate rounded px-1 py-[2px] ${a.status==='Concluído'?'bg-green-100 text-green-800':'bg-blue-100 text-blue-800'}">${esc(a.hora||'')} ${esc(a.cliente)}</div>`)
-      .join('');
-    return `<div class="h-24 border rounded p-1 bg-white flex flex-col"><div class="text-xs font-semibold">${dia}</div><div class="flex-1 space-y-1 overflow-hidden">${itens||'<span class="text-[10px] text-gray-400">Livre</span>'}</div></div>`;
-  }).join('');
-}
-
-function dashboard(){
-let mes=new Date().toISOString().slice(0,7);
-let rec=db.receitas.filter(r=>r.status==='Pago'&&r.data.startsWith(mes)).reduce((s,r)=>s+r.valor,0);
-let desp=db.despesas.filter(d=>d.data.startsWith(mes)).reduce((s,d)=>s+d.valor,0);
-dRec.textContent=rec;dDesp.textContent=desp;dRes.textContent=rec-desp;dQtd.textContent=db.receitas.length+db.despesas.length;
-
-if(graf1)graf1.destroy();
-graf1=new Chart(grafResumo,{type:'bar',data:{labels:['Receita','Despesa'],datasets:[{data:[rec,desp]}]}});
-
-let map={};db.despesas.forEach(d=>map[d.cat]=(map[d.cat]||0)+d.valor);
-if(graf2)graf2.destroy();
-graf2=new Chart(grafCategoria,{type:'pie',data:{labels:Object.keys(map),datasets:[{data:Object.values(map)}]}});
-}
-
-window.calcDRE=()=>{
-let m=dreMes.value;
-let r=db.receitas.filter(x=>x.status==='Pago'&&x.data.startsWith(m)).reduce((s,x)=>s+x.valor,0);
-let d=db.despesas.filter(x=>x.data.startsWith(m)).reduce((s,x)=>s+x.valor,0);
-dreR.textContent=r;dreD.textContent=d;dreRes.textContent=r-d;
-};
-
-window.calcIR=()=>{
-let a=irAno.value;
-let r=db.receitas.filter(x=>x.status==='Pago'&&x.data.startsWith(a)).reduce((s,x)=>s+x.valor,0);
-let d=db.despesas.filter(x=>x.data.startsWith(a)).reduce((s,x)=>s+x.valor,0);
-irR.textContent=r;irD.textContent=d;irB.textContent=r-d;
-};
+window.openClientModal=openClientModal;window.closeClientModal=closeClientModal;window.createClient=createClient;window.deleteClient=deleteClient;window.selectClient=selectClient;window.go=go;window.setClient=setClient;window.updateRow=updateRow;window.addRow=addRow;window.delRow=delRow;window.renderAll=renderAll;window.exportBackup=exportBackup;window.importBackup=importBackup;window.syncToFirebase=syncToFirebase;window.loadFromFirebase=loadFromFirebase;window.app=app;window.save=save;
+nav();renderAll();
 </script>
-
 </body>
 </html>
+'''
+
+out_dir = Path("/mnt/data/finmei_pro_codigo_corrigido")
+out_dir.mkdir(exist_ok=True)
+(out_dir / "index.html").write_text(html, encoding="utf-8")
+(out_dir / "firestore.rules").write_text("""rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /consultorias/{document} {
+      allow read, write: if true;
+    }
+  }
+}
+""", encoding="utf-8")
+(out_dir / "firebase.json").write_text(json.dumps({"hosting":{"public":".","ignore":["firebase.json","**/.*","**/node_modules/**"]}}, indent=2), encoding="utf-8")
+(out_dir / "README.md").write_text("""# FinMEI Pro - Código corrigido
+
+Este arquivo já está com o Firebase do projeto finmei-pro configurado.
+
+Para funcionar:
+1. Crie o Cloud Firestore.
+2. Escolha Edição Standard.
+3. Use modo de teste.
+4. Abra index.html.
+5. Clique em Salvar na nuvem.
+
+Cole as regras do arquivo firestore.rules em Firestore > Regras se precisar liberar leitura/escrita no teste.
+""", encoding="utf-8")
+
+zip_path = Path("/mnt/data/FinMEI_Pro_Codigo_Corrigido_Firebase.zip")
+with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+    for f in out_dir.iterdir():
+        z.write(f, arcname=f.name)
+
+print("/mnt/data/finmei_pro_codigo_corrigido/index.html")
+print("/mnt/data/FinMEI_Pro_Codigo_Corrigido_Firebase.zip")
