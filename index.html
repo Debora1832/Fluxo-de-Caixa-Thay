@@ -247,7 +247,7 @@ function syncAutoEstoque(c=current()){
  const manual=(c.estoque||[]).filter(row=>row.origem!=='caixa');
  const auto=(c.caixa||[]).filter(shouldSyncSale).map(row=>{
  const product=findProductByCode(row.produtoCodigo,c);
- const quantity=Math.max(1,num(row.quantidade)||1);
+ const quantity=Math.max(1,num(row.quantidade));
  const unitPrice=product?num(product.preco):num(row.valor);
  if(product){
   row.quantidade=quantity;
@@ -330,7 +330,7 @@ function syncRowWithProduct(table,row,key){
  if(table==='caixa'&&key==='quantidade'&&shouldSyncSale(row)){
  const product=findProductByCode(row.produtoCodigo,c);
  if(product){
-  const quantity=Math.max(1,num(row.quantidade)||1);
+  const quantity=Math.max(1,num(row.quantidade));
   row.quantidade=quantity;
   row.valor=num(product.preco)*quantity;
  }
