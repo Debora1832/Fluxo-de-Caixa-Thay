@@ -50,7 +50,14 @@ th{position:sticky;top:0;background:#ecd0cb;color:var(--text);text-align:left;fo
 td{padding:3px 6px;border:1px solid var(--line);font-size:13px}td input,td select{width:100%;min-width:98px;border:1px solid transparent;background:transparent;border-radius:0;padding:2px 4px;outline:none;color:inherit}
 td input:focus,td select:focus{border-color:#8e2e20;background:#fff;box-shadow:0 0 0 1px #e7d3d1}.empty{padding:24px;text-align:center;color:var(--muted);background:#faf7f7;border-radius:0}
 tbody tr.row-receita td{background:#0a5a08;color:#fff;font-weight:700}tbody tr.row-invest td{background:#0d2f8b;color:#fff;font-weight:700}tbody tr.row-despesa td{background:#5a170f;color:#fff;font-weight:700}tbody tr.row-despesa-vendas td{background:#5b130a;color:#fff;font-weight:700}tbody tr.row-impostos td{background:#4a130d;color:#fff;font-weight:700}
-.dre-row{display:flex;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-bottom:0;background:#fff}.dre-row:last-child{border-bottom:1px solid var(--line)}.dre-row.total{background:#ece0de;border-radius:0;margin-top:6px;font-size:17px}.good strong{color:var(--green)}.bad strong{color:var(--red)}
+.dre-table{min-width:700px}
+.dre-table td{padding:8px 10px;font-weight:700}
+.dre-head td{background:#ecd0cb;text-transform:uppercase;font-size:12px}
+.dre-receita td{background:#0a5a08;color:#fff}
+.dre-custo td,.dre-taxas td,.dre-despesas td{background:#5a170f;color:#fff}
+.dre-subtotal td{background:#2d2a2a;color:#fff}
+.dre-total.good td{background:#0a5a08;color:#fff}
+.dre-total.bad td{background:#5a170f;color:#fff}
 .notice{background:#f8efcc;border:1px solid #c9b77f;border-radius:0;padding:10px;color:#5f4823}.notice.ok{background:#e6f4e8;border-color:#8fbe95;color:#0f5a16}.notice.err{background:#f9e6e3;border-color:#d49b92;color:#8a1f13}
 .modal{position:fixed;inset:0;background:rgba(22,16,15,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:18px}.modal.open{display:flex}
 .modal-card{background:#f8f2f1;border-radius:0;border:1px solid #96706a;width:min(720px,100%);box-shadow:none;padding:16px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
@@ -86,7 +93,7 @@ tbody tr.row-receita td{background:#0a5a08;color:#fff;font-weight:700}tbody tr.r
 <section class="page" id="estoque"><div class="topbar"><div class="title"><h2>Movimentação de estoque</h2><p>Entradas, saídas, perdas, trocas e devoluções.</p></div><button class="btn green" onclick="addRow('estoque')">+ Movimentação</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Código</th><th>Produto</th><th>Tipo</th><th>Quantidade</th><th>Custo unit.</th><th>Preço venda</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tblEstoque"></tbody></table></div></div></section>
 <section class="page" id="cadastros"><div class="topbar"><div class="title"><h2>Cadastro base do fluxo de caixa</h2><p>Cadastre tipos, categorias, pagamentos e contas que o fluxo de caixa vai puxar.</p></div></div><div class="panel"><div class="form-grid" id="cadastroGrid"></div></div></section>
 <section class="page" id="caixa"><div class="topbar"><div class="title"><h2>Fluxo de caixa</h2><p>Entradas, saídas e contas.</p></div><button class="btn green" onclick="addRow('caixa')">+ Lançamento</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Mês</th><th>Ano</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th>Pagamento</th><th>Conta</th><th>Ações</th></tr></thead><tbody id="tblCaixa"></tbody></table></div></div></section>
-<section class="page" id="dre"><div class="topbar"><div class="title"><h2>DRE simplificada</h2><p>Resultado financeiro.</p></div></div><div class="panel"><div class="form-grid" style="margin-bottom:16px"><div class="field"><label>Mês</label><select id="dreMes" onchange="renderDRE()"></select></div><div class="field"><label>Ano</label><input id="dreAno" type="number" value="2026" onchange="renderDRE()"></div></div><div id="dreBox"></div></div></section>
+<section class="page" id="dre"><div class="topbar"><div class="title"><h2>DRE simplificada</h2><p>Resultado financeiro.</p></div></div><div class="panel"><div class="form-grid" style="margin-bottom:16px"><div class="field"><label>Mês</label><select id="dreMes" onchange="renderDRE()"></select></div><div class="field"><label>Ano</label><input id="dreAno" type="number" value="2026" onchange="renderDRE()"></div></div><div class="table-wrap"><table class="dre-table"><tbody id="dreBox"></tbody></table></div></div></section>
 <section class="page" id="metas"><div class="topbar"><div class="title"><h2>Plano de metas</h2><p>Metas financeiras e ações.</p></div><button class="btn green" onclick="addRow('metas')">+ Meta</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Mês</th><th>Ano</th><th>Faturamento meta</th><th>Lucro meta</th><th>Qtd. vendas</th><th>Ação principal</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tblMetas"></tbody></table></div></div></section>
 <section class="page" id="relatorio"><div class="topbar"><div class="title"><h2>Relatório da consultoria</h2><p>Resumo para apresentar ao cliente.</p></div><button class="btn blue" onclick="window.print()">Imprimir/Salvar PDF</button></div><div class="panel" id="reportBox"></div></section>
 </main></div>
@@ -208,7 +215,29 @@ function renderCadastros(){
  if(!grid)return;
  grid.innerHTML=cadastroFields.map(([key,label,placeholder])=>`<div class="field"><label>${label}</label><div class="cadastro-list">${c.cadastros[key].map((item,i)=>`<div class="cadastro-item"><span>${item}</span><button class="btn red small" onclick="delCadastroItem('${key}',${i})">Excluir</button></div>`).join('')}</div><div class="cadastro-add"><input id="cad_${key}" placeholder="${placeholder}"><button class="btn green small" onclick="addCadastroItem('${key}')">Adicionar</button></div></div>`).join('');
 }
-function renderDRE(){const mes=document.getElementById('dreMes').value||'JUNHO';const ano=Number(document.getElementById('dreAno').value||2026);const rows=current().caixa.filter(x=>x.mes===mes&&Number(x.ano)===ano);const rec=rows.filter(x=>x.tipo==='Receita').reduce((s,x)=>s+num(x.valor),0);const est=rows.filter(x=>x.tipo==='Despesa'&&x.categoria==='Estoque / Mercadoria').reduce((s,x)=>s+num(x.valor),0);const taxas=rows.filter(x=>x.tipo==='Despesa'&&taxExpenseCategories.includes(x.categoria)).reduce((s,x)=>s+num(x.valor),0);const oper=rows.filter(x=>x.tipo==='Despesa'&&!['Estoque / Mercadoria',...taxExpenseCategories].includes(x.categoria)).reduce((s,x)=>s+num(x.valor),0);const lucro=rec-est-taxas-oper;document.getElementById('dreBox').innerHTML=`<div class="dre-row"><b>Receita bruta</b><strong>${money(rec)}</strong></div><div class="dre-row"><b>(-) Custo mercadoria/serviço</b><strong>${money(est)}</strong></div><div class="dre-row"><b>(-) Taxas e impostos</b><strong>${money(taxas)}</strong></div><div class="dre-row"><b>(-) Despesas operacionais</b><strong>${money(oper)}</strong></div><div class="dre-row total ${lucro>=0?'good':'bad'}"><b>Lucro/Prejuízo líquido</b><strong>${money(lucro)}</strong></div>`;}
+function renderDRE(){
+ const mes=document.getElementById('dreMes').value||'JUNHO';
+ const ano=Number(document.getElementById('dreAno').value||2026);
+ const rows=current().caixa.filter(x=>x.mes===mes&&Number(x.ano)===ano);
+ const rec=rows.filter(x=>x.tipo==='Receita').reduce((s,x)=>s+num(x.valor),0);
+ const est=rows.filter(x=>x.tipo==='Despesa'&&x.categoria==='Estoque / Mercadoria').reduce((s,x)=>s+num(x.valor),0);
+ const taxas=rows.filter(x=>x.tipo==='Despesa'&&taxExpenseCategories.includes(x.categoria)).reduce((s,x)=>s+num(x.valor),0);
+ const oper=rows.filter(x=>x.tipo==='Despesa'&&!['Estoque / Mercadoria',...taxExpenseCategories].includes(x.categoria)).reduce((s,x)=>s+num(x.valor),0);
+ const lucroBruto=rec-est;
+ const lucro=lucroBruto-taxas-oper;
+ const hasBase=Number.isFinite(rec)&&rec!==0;
+ const pct=v=>hasBase?`${((v/rec)*100).toFixed(1).replace('.',',')}%`:'0,0%';
+ const margem=pct(lucro);
+ document.getElementById('dreBox').innerHTML=`
+  <tr class="dre-head"><td>Linha</td><td>Valor</td><td>% Receita</td></tr>
+  <tr class="dre-receita"><td>Receita bruta</td><td>${money(rec)}</td><td>100,0%</td></tr>
+  <tr class="dre-custo"><td>(-) Custo mercadoria/serviço</td><td>${money(est)}</td><td>${pct(est)}</td></tr>
+  <tr class="dre-subtotal"><td>(=) Lucro bruto</td><td>${money(lucroBruto)}</td><td>${pct(lucroBruto)}</td></tr>
+  <tr class="dre-taxas"><td>(-) Taxas e impostos</td><td>${money(taxas)}</td><td>${pct(taxas)}</td></tr>
+  <tr class="dre-despesas"><td>(-) Despesas operacionais</td><td>${money(oper)}</td><td>${pct(oper)}</td></tr>
+  <tr class="dre-total ${lucro>=0?'good':'bad'}"><td>(=) Lucro/Prejuízo líquido</td><td>${money(lucro)}</td><td>${margem}</td></tr>
+ `;
+}
 function renderReport(){let c=current();document.getElementById('reportBox').innerHTML=`<h3>Relatório financeiro — ${c.nome}</h3><p><b>Segmento:</b> ${c.segmento}</p><p><b>Tipo de operação:</b> ${labelOp(c.operacao)}</p><p><b>Receita acumulada:</b> ${money(receitas())}</p><p><b>Despesas acumuladas:</b> ${money(despesas())}</p><p><b>Saldo acumulado:</b> ${money(saldo())}</p><hr><h3>Recomendações</h3><ol><li>Registrar todas as entradas e saídas semanalmente.</li><li>Separar dinheiro pessoal do dinheiro do negócio.</li><li>Calcular margem real antes de definir preço.</li>${hasProd()?'<li>Acompanhar giro de estoque e evitar compra sem análise de venda.</li>':'<li>Medir custo, tempo e lucro por serviço realizado.</li>'}<li>Definir meta mensal de faturamento, lucro e reinvestimento.</li></ol>`;}
 function renderDreSelect(){const sel=document.getElementById('dreMes');if(sel&&!sel.innerHTML)sel.innerHTML=meses.map(m=>`<option>${m}</option>`).join('');}
 function setCloudStatus(message,type=''){const el=document.getElementById('firebaseStatus');if(!el)return;el.className='notice '+type;el.innerHTML=message;}
