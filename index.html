@@ -54,6 +54,10 @@ tbody tr.row-receita td{background:#0a5a08;color:#fff;font-weight:700}tbody tr.r
 .notice{background:#f8efcc;border:1px solid #c9b77f;border-radius:0;padding:10px;color:#5f4823}.notice.ok{background:#e6f4e8;border-color:#8fbe95;color:#0f5a16}.notice.err{background:#f9e6e3;border-color:#d49b92;color:#8a1f13}
 .modal{position:fixed;inset:0;background:rgba(22,16,15,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:18px}.modal.open{display:flex}
 .modal-card{background:#f8f2f1;border-radius:0;border:1px solid #96706a;width:min(720px,100%);box-shadow:none;padding:16px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.cadastro-list{display:grid;gap:6px;margin-bottom:8px}
+.cadastro-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;border:1px solid #bda7a3;background:#fff}
+.cadastro-add{display:flex;gap:8px}
+.cadastro-add input{flex:1}
 @media(max-width:1000px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.cards{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}}
 @media(max-width:620px){.cards{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}}
 </style>
@@ -80,6 +84,7 @@ tbody tr.row-receita td{background:#0a5a08;color:#fff;font-weight:700}tbody tr.r
 <section class="page" id="produtos"><div class="topbar"><div class="title"><h2>Cadastro de produtos</h2><p>Produtos e mercadorias com estoque.</p></div><button class="btn green" onclick="addRow('produtos')">+ Produto</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Código</th><th>Produto</th><th>Categoria</th><th>Tamanho</th><th>Cor</th><th>Fornecedor</th><th>Custo</th><th>Preço venda</th><th>Estoque inicial</th><th>Ações</th></tr></thead><tbody id="tblProdutos"></tbody></table></div></div></section>
 <section class="page" id="servicos"><div class="topbar"><div class="title"><h2>Cadastro de serviços</h2><p>Serviços prestados sem controle de estoque.</p></div><button class="btn green" onclick="addRow('servicos')">+ Serviço</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Código</th><th>Serviço</th><th>Categoria</th><th>Tempo médio</th><th>Custo estimado</th><th>Preço cobrado</th><th>Observação</th><th>Ações</th></tr></thead><tbody id="tblServicos"></tbody></table></div></div></section>
 <section class="page" id="estoque"><div class="topbar"><div class="title"><h2>Movimentação de estoque</h2><p>Entradas, saídas, perdas, trocas e devoluções.</p></div><button class="btn green" onclick="addRow('estoque')">+ Movimentação</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Código</th><th>Produto</th><th>Tipo</th><th>Quantidade</th><th>Custo unit.</th><th>Preço venda</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tblEstoque"></tbody></table></div></div></section>
+<section class="page" id="cadastros"><div class="topbar"><div class="title"><h2>Cadastro base do fluxo de caixa</h2><p>Cadastre tipos, categorias, pagamentos e contas que o fluxo de caixa vai puxar.</p></div></div><div class="panel"><div class="form-grid" id="cadastroGrid"></div></div></section>
 <section class="page" id="caixa"><div class="topbar"><div class="title"><h2>Fluxo de caixa</h2><p>Entradas, saídas e contas.</p></div><button class="btn green" onclick="addRow('caixa')">+ Lançamento</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Mês</th><th>Ano</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th>Pagamento</th><th>Conta</th><th>Ações</th></tr></thead><tbody id="tblCaixa"></tbody></table></div></div></section>
 <section class="page" id="dre"><div class="topbar"><div class="title"><h2>DRE simplificada</h2><p>Resultado financeiro.</p></div></div><div class="panel"><div class="form-grid" style="margin-bottom:16px"><div class="field"><label>Mês</label><select id="dreMes" onchange="renderDRE()"></select></div><div class="field"><label>Ano</label><input id="dreAno" type="number" value="2026" onchange="renderDRE()"></div></div><div id="dreBox"></div></div></section>
 <section class="page" id="metas"><div class="topbar"><div class="title"><h2>Plano de metas</h2><p>Metas financeiras e ações.</p></div><button class="btn green" onclick="addRow('metas')">+ Meta</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Mês</th><th>Ano</th><th>Faturamento meta</th><th>Lucro meta</th><th>Qtd. vendas</th><th>Ação principal</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tblMetas"></tbody></table></div></div></section>
@@ -107,15 +112,29 @@ const CLOUD_COLLECTION = "consultorias";
 const CLOUD_DOC = "dados_principais";
 
 const meses=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
-const pageDefs=[['home','Clientes'],['dashboard','Dashboard'],['cliente','Dados do cliente'],['produtos','Produtos'],['servicos','Serviços'],['estoque','Estoque'],['caixa','Fluxo de caixa'],['dre','DRE'],['metas','Metas'],['relatorio','Relatório']];
+const pageDefs=[['home','Clientes'],['dashboard','Dashboard'],['cliente','Dados do cliente'],['produtos','Produtos'],['servicos','Serviços'],['estoque','Estoque'],['cadastros','Cadastros'],['caixa','Fluxo de caixa'],['dre','DRE'],['metas','Metas'],['relatorio','Relatório']];
 const taxExpenseCategories=['Taxas','Impostos'];
+const defaultCadastroOptions={tipos:['Receita','Despesa'],categorias:['Venda','Estoque / Mercadoria','Embalagem','Frete','Marketing','Taxas','Plataforma','Pró-labore','Reserva','Impostos','Outros'],pagamentos:['Pix','Cartão de crédito','Débito','Dinheiro','Link de pagamento','Boleto','Transferência']};
+const cadastroFields=[['tipos','Tipos de lançamento','Ex.: Receita'],['categorias','Categorias','Ex.: Venda'],['pagamentos','Métodos de pagamento','Ex.: Pix'],['contas','Contas','Ex.: Caixa principal']];
 const schemas={produtos:['codigo','produto','categoria','tamanho','cor','fornecedor','custo','preco','estoqueInicial'],servicos:['codigo','servico','categoria','tempo','custo','preco','obs'],estoque:['data','codigo','produto','tipo','quantidade','custo','preco','status'],caixa:['data','mes','ano','tipo','categoria','descricao','valor','pagamento','conta'],metas:['mes','ano','faturamento','lucro','vendas','acao','status']};
 const defaults={produtos:{codigo:'',produto:'',categoria:'',tamanho:'',cor:'',fornecedor:'',custo:0,preco:0,estoqueInicial:0},servicos:{codigo:'',servico:'',categoria:'',tempo:'',custo:0,preco:0,obs:''},estoque:{data:new Date().toISOString().slice(0,10),codigo:'',produto:'',tipo:'Entrada',quantidade:1,custo:0,preco:0,status:'Disponível'},caixa:{data:new Date().toISOString().slice(0,10),mes:'JUNHO',ano:2026,tipo:'Receita',categoria:'Venda',descricao:'',valor:0,pagamento:'Pix',conta:''},metas:{mes:'JUNHO',ano:2026,faturamento:0,lucro:0,vendas:0,acao:'',status:'Planejado'}};
 
-function seed(){return {current:'ncstore',clients:[{id:'ncstore',nome:'NC Store',segmento:'Roupas femininas online',tipo:'MEI / Loja online',operacao:'produto',cnpj:'',responsavel:'Nicolly',telefone:'',status:'Ativo',obs:'Loja iniciando operação. Prioridade: precificação, caixa e estoque.',produtos:[{codigo:'NC001',produto:'Estoque inicial',categoria:'Roupas femininas',tamanho:'Variado',cor:'Variado',fornecedor:'',custo:76.37,preco:120,estoqueInicial:29}],servicos:[],estoque:[{data:'2026-06-01',codigo:'NC001',produto:'Estoque inicial',tipo:'Entrada',quantidade:29,custo:76.37,preco:120,status:'Disponível'}],caixa:[{data:'2026-06-01',mes:'JUNHO',ano:2026,tipo:'Receita',categoria:'Venda',descricao:'Lucro inicial informado',valor:250,pagamento:'Pix',conta:'NC Store'},{data:'2026-06-01',mes:'JUNHO',ano:2026,tipo:'Despesa',categoria:'Estoque / Mercadoria',descricao:'Primeira coleção + frete',valor:1081,pagamento:'Pix',conta:'NC Store'},{data:'2026-06-01',mes:'JUNHO',ano:2026,tipo:'Despesa',categoria:'Estoque / Mercadoria',descricao:'Segunda coleção',valor:1133.84,pagamento:'Pix',conta:'NC Store'}],metas:[{mes:'JUNHO',ano:2026,faturamento:1500,lucro:369,vendas:15,acao:'Implantar controle financeiro e precificação',status:'Em andamento'}]}]};}
+function defaultCadastros(nome=''){return {tipos:[...defaultCadastroOptions.tipos],categorias:[...defaultCadastroOptions.categorias],pagamentos:[...defaultCadastroOptions.pagamentos],contas:nome?[nome]:[]};}
+function ensureCadastros(c){
+ const defs=defaultCadastros(c.nome||'');
+ if(!c.cadastros||typeof c.cadastros!=='object')c.cadastros=defs;
+ ['tipos','categorias','pagamentos','contas'].forEach(k=>{
+  if(!Array.isArray(c.cadastros[k]))c.cadastros[k]=[...defs[k]];
+  c.cadastros[k]=[...new Set(c.cadastros[k].map(v=>String(v||'').trim()).filter(Boolean))];
+  if(!c.cadastros[k].length)c.cadastros[k]=[...defs[k]];
+ });
+ if(c.nome&&!c.cadastros.contas.includes(c.nome))c.cadastros.contas.unshift(c.nome);
+}
+
+function seed(){return {current:'ncstore',clients:[{id:'ncstore',nome:'NC Store',segmento:'Roupas femininas online',tipo:'MEI / Loja online',operacao:'produto',cnpj:'',responsavel:'Nicolly',telefone:'',status:'Ativo',obs:'Loja iniciando operação. Prioridade: precificação, caixa e estoque.',cadastros:defaultCadastros('NC Store'),produtos:[{codigo:'NC001',produto:'Estoque inicial',categoria:'Roupas femininas',tamanho:'Variado',cor:'Variado',fornecedor:'',custo:76.37,preco:120,estoqueInicial:29}],servicos:[],estoque:[{data:'2026-06-01',codigo:'NC001',produto:'Estoque inicial',tipo:'Entrada',quantidade:29,custo:76.37,preco:120,status:'Disponível'}],caixa:[{data:'2026-06-01',mes:'JUNHO',ano:2026,tipo:'Receita',categoria:'Venda',descricao:'Lucro inicial informado',valor:250,pagamento:'Pix',conta:'NC Store'},{data:'2026-06-01',mes:'JUNHO',ano:2026,tipo:'Despesa',categoria:'Estoque / Mercadoria',descricao:'Primeira coleção + frete',valor:1081,pagamento:'Pix',conta:'NC Store'},{data:'2026-06-01',mes:'JUNHO',ano:2026,tipo:'Despesa',categoria:'Estoque / Mercadoria',descricao:'Segunda coleção',valor:1133.84,pagamento:'Pix',conta:'NC Store'}],metas:[{mes:'JUNHO',ano:2026,faturamento:1500,lucro:369,vendas:15,acao:'Implantar controle financeiro e precificação',status:'Em andamento'}]}]};}
 let app=JSON.parse(localStorage.getItem('finmei_pro_fire_v2')||'null')||seed();migrate();
 
-function migrate(){app.clients.forEach(c=>{['produtos','servicos','estoque','caixa','metas'].forEach(k=>{if(!c[k])c[k]=[]});if(!c.operacao)c.operacao='produto';if(!c.status)c.status='Ativo';});}
+function migrate(){app.clients.forEach(c=>{['produtos','servicos','estoque','caixa','metas'].forEach(k=>{if(!c[k])c[k]=[]});if(!c.operacao)c.operacao='produto';if(!c.status)c.status='Ativo';ensureCadastros(c);});}
 function save(){localStorage.setItem('finmei_pro_fire_v2',JSON.stringify(app));}
 function current(){return app.clients.find(c=>c.id===app.current)||app.clients[0];}
 function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
@@ -129,18 +148,43 @@ function saldo(c=current()){return receitas(c)-despesas(c);}
 
 function openClientModal(){document.getElementById('clientModal').classList.add('open');}
 function closeClientModal(){document.getElementById('clientModal').classList.remove('open');}
-function createClient(){let nome=document.getElementById('newNome').value.trim();if(!nome){alert('Informe o nome do cliente.');return;}let c={id:'c'+Date.now(),nome,segmento:document.getElementById('newSegmento').value||'Não informado',tipo:document.getElementById('newTipo').value,operacao:document.getElementById('newOperacao').value,cnpj:'',responsavel:'',telefone:'',status:'Diagnóstico',obs:'',produtos:[],servicos:[],estoque:[],caixa:[],metas:[]};app.clients.push(c);app.current=c.id;save();closeClientModal();renderAll();go('dashboard');}
+function createClient(){let nome=document.getElementById('newNome').value.trim();if(!nome){alert('Informe o nome do cliente.');return;}let c={id:'c'+Date.now(),nome,segmento:document.getElementById('newSegmento').value||'Não informado',tipo:document.getElementById('newTipo').value,operacao:document.getElementById('newOperacao').value,cnpj:'',responsavel:'',telefone:'',status:'Diagnóstico',obs:'',cadastros:defaultCadastros(nome),produtos:[],servicos:[],estoque:[],caixa:[],metas:[]};app.clients.push(c);app.current=c.id;save();closeClientModal();renderAll();go('dashboard');}
 function deleteClient(id){if(!confirm('Deseja excluir este cliente e todos os dados dele?'))return;app.clients=app.clients.filter(c=>c.id!==id);if(!app.clients.length)app=seed();app.current=app.clients[0].id;save();renderAll();go('home');}
 function selectClient(id){app.current=id;save();renderAll();go('dashboard');}
 
 function nav(){document.getElementById('nav').innerHTML=pageDefs.map(([id,label])=>`<button id="nav_${id}" onclick="go('${id}')">${label}</button>`).join('');}
 function go(id){if((id==='produtos'||id==='estoque')&&!hasProd())id='dashboard';if(id==='servicos'&&!hasServ())id='dashboard';document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');document.body.classList.toggle('home-mode',id==='home');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));let n=document.getElementById('nav_'+id);if(n)n.classList.add('active');renderAll();}
-function setClient(k,v){current()[k]=v;save();renderAll();}
+function setClient(k,v){
+ const c=current();
+ if(k==='nome'){
+  const oldName=c.nome||'';
+  c.nome=v;
+  ensureCadastros(c);
+  const idx=c.cadastros.contas.indexOf(oldName);
+  if(idx>=0)c.cadastros.contas[idx]=v;
+  else if(v&&!c.cadastros.contas.includes(v))c.cadastros.contas.unshift(v);
+  c.caixa.forEach(row=>{if(row.conta===oldName)row.conta=v;});
+ }else c[k]=v;
+ save();renderAll();
+}
 function opt(options,v){return options.map(o=>`<option ${o==v?'selected':''}>${o}</option>`).join('');}
-function cellInput(table,i,key,v){const selects={mes:meses,tipo:['Receita','Despesa','Entrada','Saída','Troca','Perda','Devolução'],status:['Disponível','Vendido','Em andamento','Planejado','Concluído','Pausado'],pagamento:['Pix','Cartão de crédito','Débito','Dinheiro','Link de pagamento','Boleto','Transferência'],categoria:['Venda','Estoque / Mercadoria','Embalagem','Frete','Marketing','Taxas','Plataforma','Pró-labore','Reserva','Impostos','Outros']};if(selects[key])return `<select onchange="updateRow('${table}',${i},'${key}',this.value)">${opt(selects[key],v)}</select>`;const type=['custo','preco','estoqueInicial','quantidade','valor','ano','faturamento','lucro','vendas'].includes(key)?'number':(key==='data'?'date':'text');return `<input type="${type}" value="${v??''}" onchange="updateRow('${table}',${i},'${key}',this.value)">`;}
+function cellInput(table,i,key,v){
+ const c=current();
+ const selects={mes:meses,tipo:['Receita','Despesa','Entrada','Saída','Troca','Perda','Devolução'],status:['Disponível','Vendido','Em andamento','Planejado','Concluído','Pausado']};
+ if(table==='caixa'){selects.tipo=c.cadastros.tipos;selects.categoria=c.cadastros.categorias;selects.pagamento=c.cadastros.pagamentos;selects.conta=c.cadastros.contas;}
+ if(selects[key]){
+  const options=[...selects[key]];
+  if(v&& !options.includes(v))options.push(v);
+  return `<select onchange="updateRow('${table}',${i},'${key}',this.value)">${opt(options,v)}</select>`;
+ }
+ const type=['custo','preco','estoqueInicial','quantidade','valor','ano','faturamento','lucro','vendas'].includes(key)?'number':(key==='data'?'date':'text');
+ return `<input type="${type}" value="${v??''}" onchange="updateRow('${table}',${i},'${key}',this.value)">`;
+}
 function updateRow(table,i,key,value){current()[table][i][key]=value;save();renderAll();}
-function addRow(table){let row={...defaults[table]};if(table==='caixa')row.conta=current().nome;current()[table].push(row);save();renderAll();}
+function addRow(table){let row={...defaults[table]};if(table==='caixa'){const c=current();row.tipo=c.cadastros.tipos[0]||row.tipo;row.categoria=c.cadastros.categorias[0]||row.categoria;row.pagamento=c.cadastros.pagamentos[0]||row.pagamento;row.conta=c.cadastros.contas[0]||c.nome;}current()[table].push(row);save();renderAll();}
 function delRow(table,i){if(confirm('Excluir esta linha?')){current()[table].splice(i,1);save();renderAll();}}
+function addCadastroItem(key){const input=document.getElementById(`cad_${key}`);if(!input)return;const value=input.value.trim();if(!value)return;const list=current().cadastros[key];if(list.some(v=>v.toLowerCase()===value.toLowerCase())){alert('Item já cadastrado.');return;}list.push(value);save();renderAll();}
+function delCadastroItem(key,index){current().cadastros[key].splice(index,1);ensureCadastros(current());save();renderAll();}
 function rowClass(table,row){
  if(table==='caixa'){
   if(row.tipo==='Receita')return'row-receita';
@@ -157,6 +201,12 @@ function renderHome(){document.getElementById('clientGrid').innerHTML=app.client
 function renderClientForm(){let c=current();document.getElementById('currentClientLabel').innerText=document.body.classList.contains('home-mode')?'Página inicial':c.nome;document.getElementById('cliNome').value=c.nome||'';document.getElementById('cliSegmento').value=c.segmento||'';document.getElementById('cliTipo').value=c.tipo||'MEI';document.getElementById('cliOperacao').value=c.operacao||'produto';document.getElementById('cliCnpj').value=c.cnpj||'';document.getElementById('cliResponsavel').value=c.responsavel||'';document.getElementById('cliTelefone').value=c.telefone||'';document.getElementById('cliStatus').value=c.status||'Ativo';document.getElementById('cliObs').value=c.obs||'';}
 function renderDashboard(){let c=current();document.getElementById('dashSub').innerText=`${c.nome} · ${labelOp(c.operacao)}`;document.getElementById('kpiReceita').innerText=money(receitas());document.getElementById('kpiDespesa').innerText=money(despesas());document.getElementById('kpiSaldo').innerText=money(saldo());document.getElementById('kpiItens').innerText=(c.produtos.length+c.servicos.length);document.getElementById('diagnostico').innerHTML=`<b>${c.nome}</b><br>Segmento: ${c.segmento||'não informado'}<br>Operação: ${labelOp(c.operacao)}<br><br>Prioridade sugerida: ${hasProd()?'precificação por produto, estoque e margem real.':'precificação por serviço, custo por atendimento e agenda de faturamento.'}`;}
 function renderVisibility(){document.getElementById('nav_produtos').style.display=hasProd()?'flex':'none';document.getElementById('nav_estoque').style.display=hasProd()?'flex':'none';document.getElementById('nav_servicos').style.display=hasServ()?'flex':'none';}
+function renderCadastros(){
+ const c=current();
+ const grid=document.getElementById('cadastroGrid');
+ if(!grid)return;
+ grid.innerHTML=cadastroFields.map(([key,label,placeholder])=>`<div class="field"><label>${label}</label><div class="cadastro-list">${c.cadastros[key].map((item,i)=>`<div class="cadastro-item"><span>${item}</span><button class="btn red small" onclick="delCadastroItem('${key}',${i})">Excluir</button></div>`).join('')}</div><div class="cadastro-add"><input id="cad_${key}" placeholder="${placeholder}"><button class="btn green small" onclick="addCadastroItem('${key}')">Adicionar</button></div></div>`).join('');
+}
 function renderDRE(){const mes=document.getElementById('dreMes').value||'JUNHO';const ano=Number(document.getElementById('dreAno').value||2026);const rows=current().caixa.filter(x=>x.mes===mes&&Number(x.ano)===ano);const rec=rows.filter(x=>x.tipo==='Receita').reduce((s,x)=>s+num(x.valor),0);const est=rows.filter(x=>x.tipo==='Despesa'&&x.categoria==='Estoque / Mercadoria').reduce((s,x)=>s+num(x.valor),0);const taxas=rows.filter(x=>x.tipo==='Despesa'&&taxExpenseCategories.includes(x.categoria)).reduce((s,x)=>s+num(x.valor),0);const oper=rows.filter(x=>x.tipo==='Despesa'&&!['Estoque / Mercadoria',...taxExpenseCategories].includes(x.categoria)).reduce((s,x)=>s+num(x.valor),0);const lucro=rec-est-taxas-oper;document.getElementById('dreBox').innerHTML=`<div class="dre-row"><b>Receita bruta</b><strong>${money(rec)}</strong></div><div class="dre-row"><b>(-) Custo mercadoria/serviço</b><strong>${money(est)}</strong></div><div class="dre-row"><b>(-) Taxas e impostos</b><strong>${money(taxas)}</strong></div><div class="dre-row"><b>(-) Despesas operacionais</b><strong>${money(oper)}</strong></div><div class="dre-row total ${lucro>=0?'good':'bad'}"><b>Lucro/Prejuízo líquido</b><strong>${money(lucro)}</strong></div>`;}
 function renderReport(){let c=current();document.getElementById('reportBox').innerHTML=`<h3>Relatório financeiro — ${c.nome}</h3><p><b>Segmento:</b> ${c.segmento}</p><p><b>Tipo de operação:</b> ${labelOp(c.operacao)}</p><p><b>Receita acumulada:</b> ${money(receitas())}</p><p><b>Despesas acumuladas:</b> ${money(despesas())}</p><p><b>Saldo acumulado:</b> ${money(saldo())}</p><hr><h3>Recomendações</h3><ol><li>Registrar todas as entradas e saídas semanalmente.</li><li>Separar dinheiro pessoal do dinheiro do negócio.</li><li>Calcular margem real antes de definir preço.</li>${hasProd()?'<li>Acompanhar giro de estoque e evitar compra sem análise de venda.</li>':'<li>Medir custo, tempo e lucro por serviço realizado.</li>'}<li>Definir meta mensal de faturamento, lucro e reinvestimento.</li></ol>`;}
 function renderDreSelect(){const sel=document.getElementById('dreMes');if(sel&&!sel.innerHTML)sel.innerHTML=meses.map(m=>`<option>${m}</option>`).join('');}
@@ -207,9 +257,9 @@ async function loadFromFirebase(){
 
 function exportBackup(){const blob=new Blob([JSON.stringify(app,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup_finmei_pro.json';a.click();}
 function importBackup(ev){const file=ev.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{try{app=JSON.parse(e.target.result);migrate();save();renderAll();alert('Backup importado com sucesso.');}catch(err){alert('Arquivo inválido.');}};reader.readAsText(file);}
-function renderAll(){renderDreSelect();renderHome();renderClientForm();renderDashboard();renderVisibility();renderTable('produtos','tblProdutos');renderTable('servicos','tblServicos');renderTable('estoque','tblEstoque');renderTable('caixa','tblCaixa');renderTable('metas','tblMetas');renderDRE();renderReport();renderFirebaseStatus();}
+function renderAll(){renderDreSelect();renderHome();renderClientForm();renderDashboard();renderVisibility();renderCadastros();renderTable('produtos','tblProdutos');renderTable('servicos','tblServicos');renderTable('estoque','tblEstoque');renderTable('caixa','tblCaixa');renderTable('metas','tblMetas');renderDRE();renderReport();renderFirebaseStatus();}
 
-window.openClientModal=openClientModal;window.closeClientModal=closeClientModal;window.createClient=createClient;window.deleteClient=deleteClient;window.selectClient=selectClient;window.go=go;window.setClient=setClient;window.updateRow=updateRow;window.addRow=addRow;window.delRow=delRow;window.renderAll=renderAll;window.exportBackup=exportBackup;window.importBackup=importBackup;window.syncToFirebase=syncToFirebase;window.loadFromFirebase=loadFromFirebase;window.app=app;window.save=save;
+window.openClientModal=openClientModal;window.closeClientModal=closeClientModal;window.createClient=createClient;window.deleteClient=deleteClient;window.selectClient=selectClient;window.go=go;window.setClient=setClient;window.updateRow=updateRow;window.addRow=addRow;window.delRow=delRow;window.addCadastroItem=addCadastroItem;window.delCadastroItem=delCadastroItem;window.renderAll=renderAll;window.exportBackup=exportBackup;window.importBackup=importBackup;window.syncToFirebase=syncToFirebase;window.loadFromFirebase=loadFromFirebase;window.app=app;window.save=save;
 nav();renderAll();
 </script>
 </body>
